@@ -394,7 +394,9 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] == "
                 return div.innerHTML;
             }
 
-            // Start auto-refresh (every 5 seconds)
+            // Auto-refresh DISABLED - page will only update on manual refresh
+            // This prevents new screenshots from popping up and breaking the layout
+            /*
             function startAutoRefresh() {
                 if (refreshInterval) return;
                 refreshInterval = setInterval(fetchScreenshots, 5000);
@@ -424,6 +426,7 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] == "
             window.addEventListener('beforeunload', function() {
                 stopAutoRefresh();
             });
+            */
         })();
     </script>
 </body>
