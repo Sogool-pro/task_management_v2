@@ -11,17 +11,23 @@ require 'DB_connection.php';
 
 $user_id = $_SESSION['id'];
 $attendance_id = isset($_POST['attendance_id']) ? (int) $_POST['attendance_id'] : null;
-// If attendance_id not provided, attempt to find today's attendance row for this user
-if (!$attendance_id) {
-    $sql_find = "SELECT id FROM attendance WHERE user_id = ? AND att_date = CURRENT_DATE LIMIT 1";
-    $stmt_find = $pdo->prepare($sql_find);
-    $stmt_find->execute([$user_id]);
-    $found = $stmt_find->fetch(PDO::FETCH_ASSOC);
-    if ($found) $attendance_id = $found['id'];
-}
-$imageData = $_POST['image'] ?? '';
 
+// DEBUG LOGGING
+$logFile = __DIR__ . '/screenshot_debug.log';
+$logEntry = date('Y-m-d H:i:s') . " - Request from User: " . ($user_id ?? 'Unknown') . " - Attendance: " . ($attendance_id ?? 'None') . "\n";
+
+if (!isset($_SESSION['id'])) {
+    $logEntry .= "Error: Unauthorized (No Session)\n";
+    file_put_contents($logFile, $logEntry, FILE_APPEND);
+    http_response_code(403);
+    echo json_encode(['status' => 'error', 'message' => 'Unauthorized']);
+    exit;
+}
+
+$imageData = $_POST['image'] ?? '';
 if (empty($imageData)) {
+    $logEntry .= "Error: No image data\n";
+    file_put_contents($logFile, $logEntry, FILE_APPEND);
     echo json_encode(['status' => 'error', 'message' => 'No image data provided']);
     exit;
 }
@@ -81,10 +87,16 @@ if ($oldScreenshot && $oldScreenshot['image_path']) {
 }
 
 // Save the new screenshot
+// Save the new screenshot
 if (file_put_contents($fullPath, $binary) === false) {
+    $logEntry .= "Error: Failed to write file to $fullPath\n";
+    file_put_contents($logFile, $logEntry, FILE_APPEND);
     echo json_encode(['status' => 'error', 'message' => 'Failed to save image']);
     exit;
 }
+
+$logEntry .= "Success: Saved to $fullPath\n";
+file_put_contents($logFile, $logEntry, FILE_APPEND);
 
 // Delete all old screenshot records for this attendance_id, then insert new one
 if ($attendance_id && !empty($oldScreenshots)) {

@@ -235,25 +235,11 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
     // Store user ID from PHP session
     var currentUserId = <?= isset($_SESSION['id']) ? $_SESSION['id'] : 'null' ?>;
 
-    // Attendance + Screenshot logic (employees)
     const btnIn = document.getElementById('btnTimeIn');
     const btnOut = document.getElementById('btnTimeOut');
     const statusSpan = document.getElementById('attendanceStatus');
     let attendanceId = null;
-    let extensionAvailable = false;
-
-    // Listen for extension ready event
-    window.addEventListener('screenshotExtensionReady', function() {
-        extensionAvailable = true;
-        console.log('Screenshot extension detected');
-    });
-
-    // Check for extension after page load
-    setTimeout(function() {
-        if (window.screenshotExtensionAvailable) {
-            extensionAvailable = true;
-        }
-    }, 1000);
+    let captureWindow = null;
 
     // Toggle button visibility based on state
     function updateButtonState(isTimedIn) {
@@ -296,23 +282,19 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
         }
     }
 
-    // Listen for extension responses
+    // Listen for messages from capture window
     window.addEventListener('message', function(event) {
+        // Only accept from same origin
         if (event.origin !== window.location.origin) return;
         
-        if (event.data.type === 'SCREENSHOT_RESPONSE') {
-            if (event.data.status === 'started') {
-                statusSpan.textContent = 'Screen capture active. Taking screenshots...';
-            } else {
-                statusSpan.textContent = 'Screen capture failed. Please try again.';
-            }
-        } else if (event.data.type === 'CAPTURE_STATUS') {
-            // Handle capture status check response
-            if (event.data.isCapturing) {
-                attendanceId = event.data.attendanceId;
-                statusSpan.textContent = 'Screen capture active (restored).';
-                updateButtonState(true);
-            }
+        if (event.data.type === 'CAPTURE_STARTED') {
+            statusSpan.textContent = 'Timed in. Screen capture active.';
+            statusSpan.className = '';
+        } else if (event.data.type === 'CAPTURE_STOPPED') {
+            statusSpan.textContent = 'Screen capture stopped.';
+        } else if (event.data.type === 'CAPTURE_ERROR') {
+             statusSpan.textContent = 'Capture error: ' + event.data.message;
+             statusSpan.className = 'status-error';
         }
     });
 
@@ -320,35 +302,31 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
     if (btnIn) {
         btnIn.addEventListener('click', async function () {
             btnIn.disabled = true;
-            statusSpan.textContent = 'Requesting screen share...';
+            statusSpan.textContent = 'Clocking in...';
             
-            if (extensionAvailable || window.screenshotExtensionAvailable) {
-                // Extension flow: Request screen share first (extension handles the prompt)
-                // Then time_in is called
-                ajax('time_in.php', '', function (res) {
-                    if (res.status === 'success') {
-                        attendanceId = res.attendance_id || null;
-                        
-                        // Now start screen capture via extension
-                        window.postMessage({
-                            type: 'REQUEST_SCREENSHOT',
-                            attendanceId: attendanceId,
-                            userId: currentUserId,
-                            apiUrl: window.location.origin + window.location.pathname.replace('index.php', 'save_screenshot.php')
-                        }, window.location.origin);
-                        
-                        statusSpan.textContent = 'Timed in. Starting screen capture...';
-                        updateButtonState(true);
-                    } else {
-                        statusSpan.textContent = res.message || 'Error during time in';
-                        btnIn.disabled = false;
-                    }
-                });
-            } else {
-                // No extension - show warning
-                statusSpan.textContent = 'Extension not installed. Please install the Employee Screenshot Monitor extension.';
-                btnIn.disabled = false;
-            }
+            ajax('time_in.php', '', function (res) {
+                if (res.status === 'success') {
+                    attendanceId = res.attendance_id || null;
+                    
+                    // Open capture window
+                    // Width/Height small, bottom right or minimized
+                    const width = 400;
+                    const height = 300;
+                    const left = screen.width - width;
+                    const top = screen.height - height;
+                    
+                    captureWindow = window.open(
+                        'capture.html?attendanceId=' + attendanceId + '&userId=' + currentUserId,
+                        'TaskFlowCapture',
+                        'width=' + width + ',height=' + height + ',left=' + left + ',top=' + top
+                    );
+
+                    updateButtonState(true);
+                } else {
+                    statusSpan.textContent = res.message || 'Error during time in';
+                    btnIn.disabled = false;
+                }
+            });
         });
     }
 
@@ -358,17 +336,15 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
             btnOut.disabled = true;
             statusSpan.textContent = 'Clocking out...';
             
-            // Stop screen capture first
-            if (extensionAvailable || window.screenshotExtensionAvailable) {
-                window.postMessage({
-                    type: 'STOP_SCREENSHOT'
-                }, window.location.origin);
+            // Close capture window
+            if (captureWindow && !captureWindow.closed) {
+                captureWindow.close();
             }
             
             // Then record time out
             ajax('time_out.php', '', function (res) {
                 if (res.status === 'success') {
-                    statusSpan.textContent = 'Timed out. Screen capture stopped.';
+                    statusSpan.textContent = 'Timed out. Session ended.';
                     attendanceId = null;
                     updateButtonState(false);
                 } else {
@@ -386,15 +362,7 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
                 attendanceId = res.attendance_id || null;
                 updateButtonState(true);
                 
-                // Check if extension is still capturing
-                if (extensionAvailable || window.screenshotExtensionAvailable) {
-                    window.postMessage({
-                        type: 'CHECK_CAPTURE_STATUS'
-                    }, window.location.origin);
-                    statusSpan.textContent = 'Timed in. Checking screen capture status...';
-                } else {
-                    statusSpan.textContent = 'Timed in (restored). Install extension to resume screen capture.';
-                }
+                statusSpan.textContent = 'Timed in. Ensure "TaskFlow Monitor" window is open.';
             }
         }, 'GET');
     }

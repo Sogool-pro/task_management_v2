@@ -118,3 +118,13 @@
 2026-01-31 16:59:07 - POST data present: YES
 2026-01-31 16:59:07 - Image data present: YES (length: 202582)
 2026-01-31 16:59:07 - Attendance ID: 1
+2026-01-31 21:11:05 - Request from User: 4 - Attendance: 6
+Success: Saved to C:\xampp\htdocs\Task_Management\screenshots\4_6.png
+2026-01-31 21:11:31 - Request from User: 4 - Attendance: 6
+Success: Saved to C:\xampp\htdocs\Task_Management\screenshots/4_6.png
+2026-01-31 21:11:44 - Request from User: 3 - Attendance: 5
+Success: Saved to C:\xampp\htdocs\Task_Management\screenshots\3_5.png
+2026-01-31 21:11:59 - Request from User: 4 - Attendance: 6
+Success: Saved to C:\xampp\htdocs\Task_Management\screenshots/4_6.png
+2026-01-31 21:12:07 - Request from User: 3 - Attendance: 5
+Success: Saved to C:\xampp\htdocs\Task_Management\screenshots/3_5.png
