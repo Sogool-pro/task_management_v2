@@ -36,10 +36,10 @@ function get_subtasks_by_member($pdo, $member_id){
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
-function update_subtask_submission($pdo, $id, $file_path){
-    $sql = "UPDATE subtasks SET submission_file = ?, status = 'submitted', updated_at = NOW() WHERE id = ?";
+function update_subtask_submission($pdo, $id, $file_path, $note = null){
+    $sql = "UPDATE subtasks SET submission_file = ?, submission_note = ?, status = 'submitted', updated_at = NOW() WHERE id = ?";
     $stmt = $pdo->prepare($sql);
-    $stmt->execute([$file_path, $id]);
+    $stmt->execute([$file_path, $note, $id]);
 }
 
 function update_subtask_status($pdo, $id, $status, $feedback = null){

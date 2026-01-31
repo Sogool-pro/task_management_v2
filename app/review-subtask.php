@@ -31,8 +31,11 @@ if ((isset($_SESSION['role']) && $_SESSION['role'] == "employee") || (isset($_SE
         } else if ($action == 'revise') {
             $status = 'revise';
             $msg = "Your subtask submission requires REVISION. Feedback: $feedback";
+        } else if ($action == 'revise') {
+            $status = 'revise';
+            $msg = "Your subtask submission requires REVISION. Feedback: $feedback";
         } else {
-             header("Location: ../edit-task-employee.php?error=Invalid action&id=$parent_id");
+             header("Location: ../my_task.php?error=Invalid action");
              exit();
         }
 
@@ -42,7 +45,7 @@ if ((isset($_SESSION['role']) && $_SESSION['role'] == "employee") || (isset($_SE
         insert_notification($pdo, [$msg, $subtask['member_id'], 'Subtask Review', $subtask['task_id']]);
 
         $em = "Subtask updated successfully";
-        header("Location: ../edit-task-employee.php?success=$em&id=$parent_id");
+        header("Location: ../my_task.php?success=$em");
         exit();
 
     }else {

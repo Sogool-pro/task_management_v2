@@ -56,8 +56,11 @@ if ((isset($_SESSION['role']) && $_SESSION['role'] == "employee") || (isset($_SE
             exit();
         }
 
+        // Get submission note
+        $note = isset($_POST['submission_note']) ? validate_input($_POST['submission_note']) : null;
+
         // Save relative path for database (so it works from root)
-        update_subtask_submission($pdo, $id, "uploads/$filename");
+        update_subtask_submission($pdo, $id, "uploads/$filename", $note);
 
         // Notify Leader
         $assignees = get_task_assignees($pdo, $subtask['task_id']);
@@ -70,7 +73,7 @@ if ((isset($_SESSION['role']) && $_SESSION['role'] == "employee") || (isset($_SE
         }
 
         $em = "Subtask submitted successfully";
-        header("Location: ../submit-subtask.php?success=$em&id=$id");
+        header("Location: ../my_task.php?success=$em");
         exit();
 
     }else {
