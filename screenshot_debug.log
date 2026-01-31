@@ -1,0 +1,120 @@
+2026-01-31 16:45:26 - Request received from user: 4
+2026-01-31 16:45:26 - POST data present: YES
+2026-01-31 16:45:26 - Image data present: YES (length: 151334)
+2026-01-31 16:45:26 - Attendance ID: 3
+2026-01-31 16:45:45 - Request received from user: 4
+2026-01-31 16:45:45 - POST data present: YES
+2026-01-31 16:45:45 - Image data present: YES (length: 144702)
+2026-01-31 16:45:45 - Attendance ID: 3
+2026-01-31 16:46:17 - Request received from user: 4
+2026-01-31 16:46:17 - POST data present: YES
+2026-01-31 16:46:17 - Image data present: YES (length: 191370)
+2026-01-31 16:46:17 - Attendance ID: 3
+2026-01-31 16:48:13 - Request received from user: 2
+2026-01-31 16:48:13 - POST data present: YES
+2026-01-31 16:48:13 - Image data present: YES (length: 473214)
+2026-01-31 16:48:13 - Attendance ID: 1
+2026-01-31 16:48:42 - Request received from user: 2
+2026-01-31 16:48:42 - POST data present: YES
+2026-01-31 16:48:42 - Image data present: YES (length: 477378)
+2026-01-31 16:48:42 - Attendance ID: 1
+2026-01-31 16:49:17 - Request received from user: 2
+2026-01-31 16:49:17 - POST data present: YES
+2026-01-31 16:49:17 - Image data present: YES (length: 471898)
+2026-01-31 16:49:17 - Attendance ID: 1
+2026-01-31 16:49:50 - Request received from user: 2
+2026-01-31 16:49:50 - POST data present: YES
+2026-01-31 16:49:50 - Image data present: YES (length: 590934)
+2026-01-31 16:49:50 - Attendance ID: 1
+2026-01-31 16:50:20 - Request received from user: 2
+2026-01-31 16:50:20 - POST data present: YES
+2026-01-31 16:50:20 - Image data present: YES (length: 528614)
+2026-01-31 16:50:20 - Attendance ID: 1
+2026-01-31 16:53:05 - Request received from user: 2
+2026-01-31 16:53:05 - POST data present: YES
+2026-01-31 16:53:05 - Image data present: YES (length: 196398)
+2026-01-31 16:53:05 - Attendance ID: 1
+2026-01-31 16:53:36 - Request received from user: 2
+2026-01-31 16:53:36 - POST data present: YES
+2026-01-31 16:53:36 - Image data present: YES (length: 198082)
+2026-01-31 16:53:36 - Attendance ID: 1
+2026-01-31 16:54:02 - Request received from user: 2
+2026-01-31 16:54:02 - POST data present: YES
+2026-01-31 16:54:02 - Image data present: YES (length: 228758)
+2026-01-31 16:54:02 - Attendance ID: 1
+2026-01-31 16:54:35 - Request received from user: 2
+2026-01-31 16:54:35 - POST data present: YES
+2026-01-31 16:54:35 - Image data present: YES (length: 103366)
+2026-01-31 16:54:35 - Attendance ID: 1
+2026-01-31 16:54:40 - Request received from user: 3
+2026-01-31 16:54:40 - POST data present: YES
+2026-01-31 16:54:40 - Image data present: YES (length: 198414)
+2026-01-31 16:54:40 - Attendance ID: 2
+2026-01-31 16:55:01 - Request received from user: 2
+2026-01-31 16:55:01 - POST data present: YES
+2026-01-31 16:55:01 - Image data present: YES (length: 346042)
+2026-01-31 16:55:01 - Attendance ID: 1
+2026-01-31 16:55:08 - Request received from user: 3
+2026-01-31 16:55:08 - POST data present: YES
+2026-01-31 16:55:08 - Image data present: YES (length: 233202)
+2026-01-31 16:55:08 - Attendance ID: 2
+2026-01-31 16:55:28 - Request received from user: 2
+2026-01-31 16:55:28 - POST data present: YES
+2026-01-31 16:55:28 - Image data present: YES (length: 233202)
+2026-01-31 16:55:28 - Attendance ID: 1
+2026-01-31 16:55:36 - Request received from user: 3
+2026-01-31 16:55:36 - POST data present: YES
+2026-01-31 16:55:36 - Image data present: YES (length: 233202)
+2026-01-31 16:55:36 - Attendance ID: 2
+2026-01-31 16:56:02 - Request received from user: 2
+2026-01-31 16:56:02 - POST data present: YES
+2026-01-31 16:56:02 - Image data present: YES (length: 233258)
+2026-01-31 16:56:02 - Attendance ID: 1
+2026-01-31 16:56:05 - Request received from user: 3
+2026-01-31 16:56:05 - POST data present: YES
+2026-01-31 16:56:05 - Image data present: YES (length: 233258)
+2026-01-31 16:56:05 - Attendance ID: 2
+2026-01-31 16:56:34 - Request received from user: 2
+2026-01-31 16:56:34 - POST data present: YES
+2026-01-31 16:56:34 - Image data present: YES (length: 233258)
+2026-01-31 16:56:34 - Attendance ID: 1
+2026-01-31 16:56:39 - Request received from user: 3
+2026-01-31 16:56:39 - POST data present: YES
+2026-01-31 16:56:39 - Image data present: YES (length: 233258)
+2026-01-31 16:56:39 - Attendance ID: 2
+2026-01-31 16:57:02 - Request received from user: 2
+2026-01-31 16:57:02 - POST data present: YES
+2026-01-31 16:57:02 - Image data present: YES (length: 233258)
+2026-01-31 16:57:02 - Attendance ID: 1
+2026-01-31 16:57:14 - Request received from user: 3
+2026-01-31 16:57:14 - POST data present: YES
+2026-01-31 16:57:14 - Image data present: YES (length: 233258)
+2026-01-31 16:57:14 - Attendance ID: 2
+2026-01-31 16:57:37 - Request received from user: 2
+2026-01-31 16:57:37 - POST data present: YES
+2026-01-31 16:57:37 - Image data present: YES (length: 233258)
+2026-01-31 16:57:37 - Attendance ID: 1
+2026-01-31 16:57:49 - Request received from user: 3
+2026-01-31 16:57:49 - POST data present: YES
+2026-01-31 16:57:49 - Image data present: YES (length: 233258)
+2026-01-31 16:57:49 - Attendance ID: 2
+2026-01-31 16:58:12 - Request received from user: 2
+2026-01-31 16:58:12 - POST data present: YES
+2026-01-31 16:58:12 - Image data present: YES (length: 233258)
+2026-01-31 16:58:12 - Attendance ID: 1
+2026-01-31 16:58:24 - Request received from user: 3
+2026-01-31 16:58:24 - POST data present: YES
+2026-01-31 16:58:24 - Image data present: YES (length: 202798)
+2026-01-31 16:58:24 - Attendance ID: 2
+2026-01-31 16:58:41 - Request received from user: 2
+2026-01-31 16:58:41 - POST data present: YES
+2026-01-31 16:58:41 - Image data present: YES (length: 202554)
+2026-01-31 16:58:41 - Attendance ID: 1
+2026-01-31 16:58:55 - Request received from user: 3
+2026-01-31 16:58:55 - POST data present: YES
+2026-01-31 16:58:55 - Image data present: YES (length: 202458)
+2026-01-31 16:58:55 - Attendance ID: 2
+2026-01-31 16:59:07 - Request received from user: 2
+2026-01-31 16:59:07 - POST data present: YES
+2026-01-31 16:59:07 - Image data present: YES (length: 202582)
+2026-01-31 16:59:07 - Attendance ID: 1

@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>TaskFlow Screen Monitor</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .status {
+            margin-top: 10px;
+            color: green;
+            font-weight: bold;
+        }
+
+        .error {
+            color: red;
+        }
+    </style>
+</head>
+
+<body>
+    <h3>TaskFlow Monitor Active</h3>
+    <p>Do not close this window while working.</p>
+    <div id="status" class="status">Initializing...</div>
+    <div id="preview"></div>
+
+    <script>
+        const MIN_INTERVAL = 25 * 1000;
+        const MAX_INTERVAL = 35 * 1000;
+        let captureInterval = null;
+        let attendanceId = null;
+        let sessionId = null;
+        let userId = null;
+        let apiUrl = 'http://localhost/Task_Management/save_screenshot.php';
+
+        // Parse query params
+        const params = new URLSearchParams(window.location.search);
+        attendanceId = params.get('attendanceId');
+        userId = params.get('userId');
+        sessionId = params.get('sessionId');
+
+        const statusDiv = document.getElementById('status');
+
+        async function startCapture() {
+            try {
+                statusDiv.innerText = "Please select screen to share...";
+                // Direct standard API call - robust and simple
+                const stream = await navigator.mediaDevices.getDisplayMedia({
+                    video: { cursor: "always" },
+                    audio: false
+                });
+
+                statusDiv.innerText = "Monitoring active";
+
+                // Handle stream stop (user clicks 'Stop Sharing')
+                stream.getVideoTracks()[0].onended = () => {
+                    statusDiv.innerText = "Stopped";
+                    statusDiv.className = "error";
+                    if (window.opener) {
+                        window.opener.postMessage({ type: 'CAPTURE_STOPPED' }, '*');
+                    }
+                };
+
+                // Signal success to main window
+                if (window.opener) {
+                    window.opener.postMessage({ type: 'CAPTURE_STARTED' }, '*');
+                }
+
+                // Start loop
+                takeScreenshot(stream); // First one immediately
+                scheduleNext(stream);
+
+            } catch (err) {
+                console.error("Error:", err);
+                statusDiv.innerText = "Error: " + err.message;
+                statusDiv.className = "error";
+                if (window.opener) {
+                    window.opener.postMessage({ type: 'CAPTURE_ERROR', message: err.message }, '*');
+                }
+            }
+        }
+
+        function scheduleNext(stream) {
+            const delay = MIN_INTERVAL + Math.random() * (MAX_INTERVAL - MIN_INTERVAL);
+            captureInterval = setTimeout(() => {
+                if (stream.active) {
+                    takeScreenshot(stream);
+                    scheduleNext(stream);
+                }
+            }, delay);
+        }
+
+        async function takeScreenshot(stream) {
+            try {
+                const track = stream.getVideoTracks()[0];
+                const imageCapture = new ImageCapture(track);
+                const bitmap = await imageCapture.grabFrame();
+
+                const canvas = document.createElement('canvas');
+                canvas.width = bitmap.width;
+                canvas.height = bitmap.height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(bitmap, 0, 0);
+
+                const dataUrl = canvas.toDataURL('image/png');
+
+                // Upload
+                const formData = new FormData();
+                formData.append('attendance_id', attendanceId);
+                formData.append('session_id', sessionId);
+                formData.append('image', dataUrl);
+
+                await fetch(apiUrl, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                console.log("Screenshot uploaded");
+                statusDiv.innerText = "Last capture: " + new Date().toLocaleTimeString();
+
+            } catch (err) {
+                console.error("Capture failed:", err);
+            }
+        }
+
+        // Auto-start
+        if (attendanceId) {
+            startCapture();
+        } else {
+            statusDiv.innerText = "Missing parameters";
+            statusDiv.className = "error";
+        }
+    </script>
+</body>
+
+</html>
