@@ -17,8 +17,8 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] == "
     }
     $is_super_admin = is_super_admin($_SESSION['id'], $pdo);
 
-    // Security check: only super admin can edit other admins
-    if ($user['role'] == 'admin' && !$is_super_admin && $user['id'] != $_SESSION['id']) {
+    // Only super admin can edit other users' basic details now
+    if (!$is_super_admin && $user['id'] != $_SESSION['id']) {
         $em = "Access denied";
         header("Location: user.php?error=$em");
         exit();

@@ -5,10 +5,10 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] == "
     include "app/Model/User.php";
     $is_super_admin = is_super_admin($_SESSION['id'], $pdo);
 
-    if ($is_super_admin) {
-        header("Location: user.php?error=Access Denied: Super Admin cannot add users.");
-        exit();
-    }
+    // Requirement: Remove add user and edit user for the admin (irrelevant).
+    // Super Admin also shouldn't add users.
+    header("Location: user.php?error=User creation is currently disabled.");
+    exit();
  ?>
 <!DOCTYPE html>
 <html>

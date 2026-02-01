@@ -171,11 +171,6 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] == "
                      <?php if ($is_super_admin) { ?>
                         <a href="user.php?role=admin" class="btn-outline <?= ($role_filter == 'admin') ? 'filter-active' : '' ?>">Admins</a>
                      <?php } ?>
-                     <?php if (!$is_super_admin) { ?>
-                     <a href="add-user.php" class="btn-primary" style="background: #4F46E5; margin-left: 10px;">
-                        <i class="fa fa-user-plus"></i> Add User
-                     </a>
-                     <?php } ?>
                 </div>
             </div>
         </div>
@@ -238,14 +233,6 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] == "
                     <button onclick="openModal('<?=$user['id']?>', '<?=addslashes($user['full_name'])?>', '<?=$user['role']?>')" class="user-card-action-btn btn-view btn-edit-role">
                         <i class="fa fa-shield" style="margin-right: 5px;"></i> Edit Role
                     </button>
-                    <?php 
-                        } 
-                        // Regular Admin gets "Edit User" link for employees
-                        else if ($_SESSION['role'] == 'admin' && $user['role'] == 'employee') {
-                    ?>
-                    <a href="edit-user.php?id=<?=$user['id']?>" class="user-card-action-btn btn-view" style="margin-top: 8px; background: #FEF3C7; color: #92400E;">
-                        Edit User
-                    </a>
                     <?php } ?>
 
                     <a href="user_details.php?id=<?=$user['id']?>" class="user-card-action-btn btn-view" style="margin-top: 8px;">
