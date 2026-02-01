@@ -6,6 +6,12 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] == "
 
     $is_super_admin = is_super_admin($_SESSION['id'], $pdo);
 
+    if ($is_super_admin) {
+        $em = "Access Denied: Super Admin cannot add users.";
+        header("Location: ../add-user.php?error=$em");
+        exit();
+    }
+
     if (isset($_POST['user_name']) && isset($_POST['password']) && isset($_POST['full_name'])) {
         
         function validate_input($data) {

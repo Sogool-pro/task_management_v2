@@ -89,9 +89,11 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] == "
                      <?php if ($is_super_admin) { ?>
                         <a href="user.php?role=admin" class="btn-outline <?= ($role_filter == 'admin') ? 'filter-active' : '' ?>">Admins</a>
                      <?php } ?>
+                     <?php if (!$is_super_admin) { ?>
                      <a href="add-user.php" class="btn-primary" style="background: #4F46E5; margin-left: 10px;">
                         <i class="fa fa-user-plus"></i> Add User
                      </a>
+                     <?php } ?>
                 </div>
             </div>
         </div>
@@ -99,8 +101,11 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] == "
         <?php if (!empty($users)) { ?>
         <div class="grid-container">
             <?php foreach ($users as $user) { 
-                // Double check to skip admins if get_all_users returns them (depending on implementation of 'all')
-                if ($user['role'] == 'admin') continue;
+                // Skip the super admin itself ('admin' username)
+                if ($user['username'] == 'admin') continue;
+                
+                // If not super admin, skip other admins
+                if (!$is_super_admin && $user['role'] == 'admin') continue;
 
                 $stats = get_user_rating_stats($pdo, $user['id']);
                 $avg_rating = $stats['avg'];
@@ -146,6 +151,15 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] == "
                     <a href="user_details.php?id=<?=$user['id']?>" class="user-card-action-btn btn-view">
                         View Profile
                     </a>
+                    
+                    <?php 
+                        // Show edit button if Super Admin, OR if regular Admin and target is employee
+                        if ($is_super_admin || ($_SESSION['role'] == 'admin' && $user['role'] == 'employee')) {
+                    ?>
+                    <a href="edit-user.php?id=<?=$user['id']?>" class="user-card-action-btn btn-view" style="margin-top: 5px; background: #FEF3C7; color: #92400E;">
+                        Edit User
+                    </a>
+                    <?php } ?>
                 </div>
 
             </div>

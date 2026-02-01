@@ -4,6 +4,11 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] == "
     include "DB_connection.php";
     include "app/Model/User.php";
     $is_super_admin = is_super_admin($_SESSION['id'], $pdo);
+
+    if ($is_super_admin) {
+        header("Location: user.php?error=Access Denied: Super Admin cannot add users.");
+        exit();
+    }
  ?>
 <!DOCTYPE html>
 <html>
