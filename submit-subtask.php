@@ -51,7 +51,7 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
 				</div>
                 <div class="input-holder">
 					<lable>Due Date</lable>
-					<p><?=$subtask['due_date']?></p>
+					<p><?= !empty($subtask['due_date']) ? date("F j, Y", strtotime($subtask['due_date'])) : 'No Deadline' ?></p>
 				</div>
                 <div class="input-holder">
 					<lable>Status</lable>

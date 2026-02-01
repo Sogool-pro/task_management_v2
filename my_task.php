@@ -84,12 +84,14 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
                     $statusText = str_replace('_', ' ', $task['status']);
                     
                     if ($task['status'] == 'in_progress') $statusClass = "in_progress";
-                    if ($task['status'] == 'completed') $statusClass = "completed";
-                    
-                    // Check Revision Status
-                    if ($task['status'] == 'in_progress' && !empty($task['review_comment'])) {
-                        $statusClass = "revision_needed"; // Reuse subtask badge class (Orange)
-                        $statusText = "revision requested";
+                    if ($task['status'] == 'completed') {
+                        if (isset($task['rating']) && $task['rating'] > 0) {
+                            $statusClass = "completed";
+                            $statusText = "completed";
+                        } else {
+                            $statusClass = "submitted"; // Use a blueish badge
+                            $statusText = "submitted for review";
+                        }
                     }
 
                     // Prepare Assignees Data (Moved to top for visibility)

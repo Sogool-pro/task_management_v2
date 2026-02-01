@@ -44,7 +44,7 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
 					<td><?=$task['title']?></td>
 					<td><?=$task['description']?></td>
 					<td><?=$task['status']?></td>
-	            <td><?=$task['due_date']?></td>
+	            <td><?= !empty($task['due_date']) ? date("F j, Y", strtotime($task['due_date'])) : 'No Deadline' ?></td>
 
 					<td>
                         <?php if ($task['status'] === 'completed') { ?>

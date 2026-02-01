@@ -115,7 +115,7 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] == "
                         <?= !empty($user['skills']) ? htmlspecialchars(substr($user['skills'], 0, 30)) . (strlen($user['skills']) > 30 ? '...' : '') : 'Not listed' ?>
                     </div>
 
-                    <a href="messages.php" class="user-card-action-btn btn-msg">
+                    <a href="messages.php?id=<?=$user['id']?>" class="user-card-action-btn btn-msg">
                         <i class="fa fa-comment-o" style="margin-right: 5px;"></i> Message
                     </a>
                     <a href="user_details.php?id=<?=$user['id']?>" class="user-card-action-btn btn-view">

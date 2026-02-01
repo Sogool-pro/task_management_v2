@@ -191,7 +191,7 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] === 
                             <!-- Footer Info (Due Date & Rating) -->
                             <div style="margin-top: 20px;">
                                 <div style="color: #6B7280; font-size: 12px;">
-                                    Due: <?= empty($task['due_date']) ? 'No Date' : date("n/j/Y", strtotime($task['due_date'])) ?>
+                                    Due: <?= empty($task['due_date']) ? 'No Date' : date("F j, Y", strtotime($task['due_date'])) ?>
                                 </div>
 
                                 <!-- Rating & Feedback Display (Task Level) -->

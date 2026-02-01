@@ -248,6 +248,18 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
             // Real-time polling
             setInterval(loadMessages, 3000); // Check every 3 seconds
 
+            // Auto-open chat if ID is provided in URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const openUserId = urlParams.get('id');
+            if (openUserId) {
+                setTimeout(function() {
+                    const targetItem = $(`.chat-item[data-id="${openUserId}"]`);
+                    if (targetItem.length > 0) {
+                        targetItem.click();
+                    }
+                }, 500); // Small delay to ensure list is rendered
+            }
+
         });
     </script>
 </body>
