@@ -70,6 +70,88 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] == "
         .btn-view:hover {
             background: #E5E7EB;
         }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background: white;
+            padding: 32px;
+            border-radius: 12px;
+            width: 400px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        .modal-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .modal-header i {
+            color: #7C3AED;
+            font-size: 20px;
+        }
+        .modal-header h3 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 600;
+        }
+        .role-note {
+            background: #FFFBEB;
+            border: 1px solid #FEF3C7;
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            color: #92400E;
+            margin-top: 15px;
+        }
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            margin-top: 24px;
+        }
+        .btn-cancel {
+            padding: 8px 16px;
+            border: 1px solid #E5E7EB;
+            background: white;
+            color: #374151;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        .btn-update-role {
+            padding: 8px 16px;
+            background: #7C3AED;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        /* New Button Style */
+        .btn-edit-role {
+            background: #F3E8FF !important;
+            color: #7C3AED !important;
+            margin-top: 8px;
+        }
+        .btn-edit-role:hover {
+            background: #EDE9FE !important;
+        }
     </style>
 </head>
 <body>
@@ -148,18 +230,27 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] == "
                     <a href="messages.php?id=<?=$user['id']?>" class="user-card-action-btn btn-msg">
                         <i class="fa fa-comment-o" style="margin-right: 5px;"></i> Message
                     </a>
-                    <a href="user_details.php?id=<?=$user['id']?>" class="user-card-action-btn btn-view">
-                        View Profile
-                    </a>
-                    
+
                     <?php 
-                        // Show edit button if Super Admin, OR if regular Admin and target is employee
-                        if ($is_super_admin || ($_SESSION['role'] == 'admin' && $user['role'] == 'employee')) {
+                        // Super Admin gets "Edit Role" modal
+                        if ($is_super_admin) {
                     ?>
-                    <a href="edit-user.php?id=<?=$user['id']?>" class="user-card-action-btn btn-view" style="margin-top: 5px; background: #FEF3C7; color: #92400E;">
+                    <button onclick="openModal('<?=$user['id']?>', '<?=addslashes($user['full_name'])?>', '<?=$user['role']?>')" class="user-card-action-btn btn-view btn-edit-role">
+                        <i class="fa fa-shield" style="margin-right: 5px;"></i> Edit Role
+                    </button>
+                    <?php 
+                        } 
+                        // Regular Admin gets "Edit User" link for employees
+                        else if ($_SESSION['role'] == 'admin' && $user['role'] == 'employee') {
+                    ?>
+                    <a href="edit-user.php?id=<?=$user['id']?>" class="user-card-action-btn btn-view" style="margin-top: 8px; background: #FEF3C7; color: #92400E;">
                         Edit User
                     </a>
                     <?php } ?>
+
+                    <a href="user_details.php?id=<?=$user['id']?>" class="user-card-action-btn btn-view" style="margin-top: 8px;">
+                        View Profile
+                    </a>
                 </div>
 
             </div>
@@ -173,6 +264,61 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] == "
 
     </div>
 
+    <!-- Edit Role Modal -->
+    <div id="roleModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <i class="fa fa-shield"></i>
+                <h3>Edit User Role</h3>
+            </div>
+            <p style="font-size: 14px; color: #6B7280; margin-bottom: 20px;">
+                Change role for: <strong id="modalUserName" style="color: #111827;"></strong>
+            </p>
+            
+            <form action="app/update-user-role.php" method="POST">
+                <input type="hidden" name="user_id" id="modalUserId">
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; font-size: 13px; font-weight: 500; color: #374151; margin-bottom: 6px;">Select New Role</label>
+                    <select name="role" id="modalUserRole" style="width: 100%; padding: 10px; border: 1px solid #D1D5DB; border-radius: 6px; outline: none;">
+                        <option value="employee">Employee</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                </div>
+                
+                <div class="role-note">
+                    <strong>Note:</strong> Changing a user's role will update their permissions immediately.
+                </div>
+                
+                <div class="modal-footer">
+                    <button type="button" class="btn-cancel" onclick="closeModal()">Cancel</button>
+                    <button type="submit" class="btn-update-role">
+                        <i class="fa fa-shield"></i> Update Role
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function openModal(id, name, role) {
+            document.getElementById('modalUserId').value = id;
+            document.getElementById('modalUserName').innerText = name;
+            document.getElementById('modalUserRole').value = role;
+            document.getElementById('roleModal').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('roleModal').style.display = 'none';
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            var modal = document.getElementById('roleModal');
+            if (event.target == modal) {
+                closeModal();
+            }
+        }
+    </script>
 </body>
 </html>
 <?php }else{ 
