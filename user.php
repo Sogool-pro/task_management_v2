@@ -107,13 +107,7 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] == "
                     <i class="fa fa-envelope-o"></i> <?= htmlspecialchars($user['username']) ?>
                 </div>
 
-                <div style="font-size: 13px; color: var(--text-gray); margin-bottom: 10px; flex-grow: 1;">
-                    <?php if (!empty($user['bio'])) { ?>
-                        <?= htmlspecialchars(substr($user['bio'], 0, 60)) . (strlen($user['bio']) > 60 ? '...' : '') ?>
-                    <?php } else { ?>
-                        No bio available
-                    <?php } ?>
-                </div>
+
                 
                 <div style="margin-top: auto; padding-top: 15px;">
                     <div style="font-size: 12px; color: var(--text-gray); margin-bottom: 10px;">
@@ -121,7 +115,7 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] == "
                         <?= !empty($user['skills']) ? htmlspecialchars(substr($user['skills'], 0, 30)) . (strlen($user['skills']) > 30 ? '...' : '') : 'Not listed' ?>
                     </div>
 
-                    <a href="messages.php" class="user-card-action-btn btn-msg">
+                    <a href="messages.php?id=<?=$user['id']?>" class="user-card-action-btn btn-msg">
                         <i class="fa fa-comment-o" style="margin-right: 5px;"></i> Message
                     </a>
                     <a href="user_details.php?id=<?=$user['id']?>" class="user-card-action-btn btn-view">

@@ -82,6 +82,11 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
                 <div class="profile-identity">
                     <h2 class="profile-name-text"><?= htmlspecialchars($user['full_name']) ?></h2>
                     <span class="profile-role-text"><?= ucfirst($user['role']) ?></span>
+                    <div class="profile-actions" style="margin-left: auto;">
+                        <a href="messages.php?id=<?=$user['id']?>" class="btn-primary" style="background: #4F46E5;">
+                            <i class="fa fa-comment"></i> Message
+                        </a>
+                    </div>
                 </div>
             </div>
 
@@ -155,12 +160,7 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
 
                     <!-- Right Column -->
                     <div style="display: flex; flex-direction: column; gap: 20px;">
-                        <div class="profile-field-group">
-                             <label>Bio</label>
-                             <div class="field-value bio-box" style="background: #F9FAFB; border-radius: 8px; padding: 15px;">
-                                 <?= htmlspecialchars($user['bio'] ?? 'No bio provided') ?>
-                             </div>
-                        </div>
+
                         
                         <div class="profile-field-group">
                             <label>Skills</label>
@@ -184,14 +184,23 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
                     ?>
                     <div class="task-item" style="border: 1px solid #E5E7EB; border-radius: 8px; padding: 20px; margin-bottom: 15px; box-shadow: none;">
                         <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px;">
-                            <span class="task-title" style="font-size: 16px;"><?php echo htmlspecialchars($task['title']); ?></span>
+                            <div>
+                                <span class="task-title" style="font-size: 16px; display: block; margin-bottom: 4px;"><?php echo htmlspecialchars($task['title']); ?></span>
+                                <?php if($task['status'] == 'completed' && isset($task['rating']) && $task['rating'] > 0) { ?>
+                                    <div style="color: #F59E0B; font-size: 14px;">
+                                        <?php for($i=1; $i<=5; $i++) { echo ($i <= $task['rating']) ? '<i class="fa fa-star"></i>' : '<i class="fa fa-star-o"></i>'; } ?>
+                                        <span style="color: #6B7280; font-size: 12px; margin-left: 4px;">(<?=$task['rating']?>/5)</span>
+                                    </div>
+                                <?php } ?>
+                            </div>
                             <span class="badge <?=$statusClass?>"><?= ucfirst($task['status']) ?></span>
                         </div>
                         <p style="font-size: 14px; color: var(--text-gray); margin: 0 0 10px;"><?= htmlspecialchars(substr($task['description'], 0, 100)) ?>...</p>
                         <div style="font-size: 12px; color: var(--text-gray);">
-                            Due: <?= $task['due_date'] ?>
+                            Due: <?= !empty($task['due_date']) ? date("F j, Y", strtotime($task['due_date'])) : 'No Date' ?>
                         </div>
                     </div>
+
                     <?php } ?>
                 <?php } else { ?>
                      <p style="color: var(--text-gray);">No recent tasks</p>

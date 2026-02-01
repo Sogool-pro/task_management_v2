@@ -39,7 +39,7 @@ if ((isset($_SESSION['role']) && $_SESSION['role'] == "employee") || (isset($_SE
             insert_notification($pdo, [$notif_msg, $member_id, 'New Subtask', $task_id]);
 
             $em = "Subtask created successfully";
-            header("Location: ../edit-task-employee.php?success=$em&id=$parent_id");
+            header("Location: ../my_task.php?success=$em");
             exit();
         }
     }else {

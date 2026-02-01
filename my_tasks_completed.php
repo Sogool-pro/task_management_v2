@@ -43,11 +43,27 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
 					<td><?=++$i?></td>
 					<td><?=$task['title']?></td>
 					<td><?=$task['description']?></td>
-					<td><?=$task['status']?></td>
-	            <td><?=$task['due_date']?></td>
+					<td>
+						<?php 
+						if ($task['status'] == 'completed' && ($task['rating'] == 0 || $task['rating'] == NULL)) {
+							echo "Submitted for Review";
+						} else {
+							echo ucfirst($task['status']);
+						}
+						?>
+					</td>
+	            <td><?= !empty($task['due_date']) ? date("F j, Y", strtotime($task['due_date'])) : 'No Deadline' ?></td>
 
 					<td>
-                        <button class="edit-btn" disabled>Submitted</button>
+                        <button class="edit-btn" disabled>
+							<?php 
+							if ($task['status'] == 'completed' && ($task['rating'] == 0 || $task['rating'] == NULL)) {
+								echo "Submitted";
+							} else {
+								echo "Completed";
+							}
+							?>
+						</button>
 					</td>
 				</tr>
 			   <?php	} ?>

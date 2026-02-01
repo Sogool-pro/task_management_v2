@@ -60,7 +60,7 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
                             <?= htmlspecialchars($sub['description']) ?>
                         </div>
                     </td>
-	                <td><?=$sub['due_date']?></td>
+	                <td><?= !empty($sub['due_date']) ? date("F j, Y", strtotime($sub['due_date'])) : 'No Deadline' ?></td>
 					<td>
                         <span class="badge badge-pending"><?= ucfirst($sub['status']) ?></span>
                     </td>
