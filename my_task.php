@@ -668,8 +668,12 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
                 Are you sure you want to submit this task? This will notify the admin.
             </p>
             
-            <form action="app/submit-task-review.php" method="POST">
+            <form action="app/submit-task-review.php" method="POST" enctype="multipart/form-data">
                 <input type="hidden" name="task_id" id="modal_task_id">
+                 <div style="margin-bottom: 15px;">
+                    <label style="display: block; font-size: 13px; font-weight: 500; color: #374151; margin-bottom: 5px;">Attach New File (Optional)</label>
+                    <input type="file" name="submission_file" class="form-input-v2" style="width: 100%;">
+                </div>
                 
                 <div style="margin-bottom: 15px;">
                     <label style="display: block; font-size: 13px; font-weight: 500; color: #374151; margin-bottom: 5px;">Submission Notes (Optional)</label>
@@ -681,6 +685,7 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
                     <button type="submit" class="btn-v2 btn-green">Submit for Review</button>
                 </div>
             </form>
+
         </div>
     </div>
 
