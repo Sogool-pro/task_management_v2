@@ -189,6 +189,7 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] == "
                                 <th>Description</th>
                                 <th>Deadline</th>
                                 <th>Status</th>
+                                <th>Score</th>
                                 <th>Submission</th>
                                 <th>Action</th>
                             </tr>
@@ -200,6 +201,13 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] == "
                                 <td><?= mb_strimwidth($sub['description'], 0, 30, "...") ?></td>
                                 <td><?= empty($sub['due_date']) ? "" : date("F j, Y", strtotime($sub['due_date'])) ?></td>
                                 <td><span class="badge badge-pending"><?= ucfirst($sub['status']) ?></span></td>
+                                <td>
+                                    <?php if ($sub['score']) { ?>
+                                        <span style="color: #F59E0B;">
+                                            <?php for($i=1; $i<=5; $i++) { echo ($i <= $sub['score']) ? '<i class="fa fa-star"></i>' : '<i class="fa fa-star-o"></i>'; } ?>
+                                        </span>
+                                    <?php } else { echo '<span style="color: #9CA3AF;">-</span>'; } ?>
+                                </td>
                                 <td>
                                     <?php if ($sub['submission_file']) { ?>
                                         <a href="<?=$sub['submission_file']?>" target="_blank" style="color: var(--primary);">View File</a>
@@ -233,6 +241,21 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] == "
                                 <textarea name="feedback" class="form-input" rows="4" required></textarea>
                             </div>
                             
+                            <div style="margin-bottom: 20px;">
+                                <label style="display: block; font-weight: 600; margin-bottom: 10px;">Performance Score (for Accept only)</label>
+                                <div id="starRating" style="display: flex; gap: 8px;">
+                                    <?php for($i=1; $i<=5; $i++) { ?>
+                                        <label style="cursor: pointer; font-size: 28px; color: #D1D5DB; transition: color 0.2s;" 
+                                               onmouseover="highlightStars(<?=$i?>)" 
+                                               onmouseout="resetStars()">
+                                            <input type="radio" name="score" value="<?=$i?>" style="display: none;" onclick="setScore(<?=$i?>)">
+                                            <i class="fa fa-star star-icon" data-index="<?=$i?>"></i>
+                                        </label>
+                                    <?php } ?>
+                                    <span id="scoreLabel" style="margin-left: 10px; font-size: 14px; color: #6B7280; align-self: center;">Not rated</span>
+                                </div>
+                            </div>
+                            
                             <div style="display: flex; gap: 10px; justify-content: flex-end;">
                                 <button name="action" value="accept" class="btn-primary" style="background: #10B981;">Accept</button>
                                 <button name="action" value="revise" class="btn-primary" style="background: #EF4444;">Request Revision</button>
@@ -242,12 +265,38 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] == "
                 </div>
                 
                 <script>
+                    let currentScore = 0;
+                    
                     function openReviewModal(id) {
                         document.getElementById('reviewSubtaskId').value = id;
                         document.getElementById('reviewModal').style.display = "block";
+                        resetStars();
+                        currentScore = 0;
+                        document.getElementById('scoreLabel').textContent = 'Not rated';
                     }
                     function closeReviewModal() {
                         document.getElementById('reviewModal').style.display = "none";
+                    }
+                    
+                    function highlightStars(index) {
+                        const stars = document.querySelectorAll('.star-icon');
+                        stars.forEach((star, i) => {
+                            star.parentElement.style.color = (i < index) ? '#F59E0B' : '#D1D5DB';
+                        });
+                    }
+                    
+                    function resetStars() {
+                        const stars = document.querySelectorAll('.star-icon');
+                        stars.forEach((star, i) => {
+                            star.parentElement.style.color = (i < currentScore) ? '#F59E0B' : '#D1D5DB';
+                        });
+                    }
+                    
+                    function setScore(index) {
+                        currentScore = index;
+                        const labels = ['Not rated', 'Poor', 'Below Average', 'Average', 'Good', 'Excellent'];
+                        document.getElementById('scoreLabel').textContent = labels[index] + ' (' + index + '/5)';
+                        highlightStars(index);
                     }
                 </script>
                 <?php } ?>

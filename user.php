@@ -4,6 +4,7 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] == "
     include "DB_connection.php";
     include "app/Model/User.php";
     include "app/Model/Task.php";
+    include "app/Model/Subtask.php";
     
     $is_super_admin = is_super_admin($_SESSION['id'], $pdo);
 
@@ -190,6 +191,7 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] == "
 
                 $stats = get_user_rating_stats($pdo, $user['id']);
                 $avg_rating = $stats['avg'];
+                $collab = get_collaborative_scores_by_user($pdo, $user['id']);
             ?>
             <div class="user-card" style="display: flex; flex-direction: column; height: 100%;">
                 
@@ -210,8 +212,14 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] == "
                      <span class="badge <?= $roleClass ?>"><?= ucfirst($user['role']) ?></span>
                 </div>
                 
-                <div style="color: #F59E0B; font-size: 13px; margin-bottom: 15px;">
-                     <i class="fa fa-star"></i> <?= $avg_rating ?> / 5.0
+                <!-- Ratings Display -->
+                <div style="display: flex; gap: 15px; margin-left: 35%; margin-top: 5px; margin-bottom: 15px; font-size: 12px;">
+                    <div style="color: #F59E0B;" title="Task Rating">
+                        <i class="fa fa-star"></i> <?= $avg_rating ?>
+                    </div>
+                    <div style="color: #8B5CF6;" title="Collaborative Score">
+                        <i class="fa fa-users"></i> <?= $collab['avg'] ?>
+                    </div>
                 </div>
 
                 <div style="color: var(--text-gray); font-size: 13px; margin-bottom: 10px;">
@@ -220,7 +228,7 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] == "
 
 
                 
-                <div style="margin-top: auto; padding-top: 15px;">
+                <div style="margin-top: auto; padding-top: 5px;">
                     <div style="font-size: 12px; color: var(--text-gray); margin-bottom: 10px;">
                         <strong>Skills:</strong> 
                         <?= !empty($user['skills']) ? htmlspecialchars(substr($user['skills'], 0, 30)) . (strlen($user['skills']) > 30 ? '...' : '') : 'Not listed' ?>

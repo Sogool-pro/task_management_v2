@@ -12,6 +12,8 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
     
     $user_id = $_GET['id'];
     $user = get_user_by_id($pdo, $user_id);
+    include "app/Model/Subtask.php";
+    $collab_scores = get_collaborative_scores_by_user($pdo, $user_id);
 
     if ($user == 0) {
         header("Location: user.php");
@@ -105,7 +107,7 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
             <div class="profile-content">
                 
                 <!-- Stats Row -->
-                <div style="display: grid; grid-template-columns: repeat(3, 1fr) 1.5fr; gap: 20px; margin-bottom: 40px; flex-wrap: wrap;">
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr) 1.2fr 1.2fr; gap: 15px; margin-bottom: 40px; flex-wrap: wrap;">
                     
                     <!-- Stats Cards -->
                     <div style="background: #ECFDF5; padding: 20px; border-radius: 12px; position: relative;">
@@ -134,6 +136,16 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
                             <span style="color: var(--text-gray); font-size: 14px;">/ 5.0</span>
                         </div>
                         <span style="font-size: 13px; color: var(--text-gray);">Based on <?= $rated_count ?> rated tasks</span>
+                    </div>
+
+                    <!-- Collaborative Score Card -->
+                    <div style="background: #F5F3FF; padding: 20px; border-radius: 12px; border: 1px solid #EDE9FE;">
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 5px;">
+                            <i class="fa fa-users" style="color: #8B5CF6; font-size: 24px;"></i>
+                            <span style="font-size: 28px; font-weight: 700; color: var(--text-dark);"><?= $collab_scores['avg'] ?></span>
+                            <span style="color: var(--text-gray); font-size: 14px;">/ 5.0</span>
+                        </div>
+                        <span style="font-size: 13px; color: var(--text-gray);">Collab Score (<?= $collab_scores['count'] ?> subtasks)</span>
                     </div>
 
                 </div>
@@ -216,6 +228,37 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
                     <?php } ?>
                 <?php } else { ?>
                      <p style="color: var(--text-gray);">No recent tasks</p>
+                <?php } ?>
+
+                <?php if (!empty($collab_scores['projects'])) { ?>
+                <hr style="margin: 40px 0; border: 0; border-top: 1px solid #E5E7EB;">
+                
+                <!-- Collaborative Score Breakdown -->
+                <h3 style="margin-bottom: 20px; font-size: 18px; color: var(--text-dark);">
+                    <i class="fa fa-users" style="color: #8B5CF6;"></i> Collaborative Score by Project
+                </h3>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px;">
+                    <?php foreach ($collab_scores['projects'] as $project) { ?>
+                    <div style="background: #F9FAFB; padding: 15px; border-radius: 8px; border: 1px solid #E5E7EB;">
+                        <div style="font-weight: 600; color: var(--text-dark); margin-bottom: 8px;"><?= htmlspecialchars($project['task_title']) ?></div>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="font-size: 12px; color: var(--text-gray);"><?= $project['subtask_count'] ?> subtasks</span>
+                            <div style="display: flex; align-items: center; gap: 5px;">
+                                <span style="color: #F59E0B;">
+                                    <?php 
+                                    $score = round($project['avg_score']);
+                                    for($i=1; $i<=5; $i++) { 
+                                        echo ($i <= $score) ? '<i class="fa fa-star"></i>' : '<i class="fa fa-star-o"></i>'; 
+                                    } 
+                                    ?>
+                                </span>
+                                <span style="font-weight: 600;"><?= number_format($project['avg_score'], 1) ?></span>
+                            </div>
+                        </div>
+                    </div>
+                    <?php } ?>
+                </div>
                 <?php } ?>
 
             </div>
