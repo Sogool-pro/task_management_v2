@@ -48,30 +48,144 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] == "
             color: white !important;
             border-color: #4F46E5 !important;
         }
-        .user-card-action-btn {
-            width: 100%; 
-            display: flex; 
-            justify-content: center; 
-            padding: 7px; 
-            border-radius: 6px; 
-            text-decoration: none; 
-            font-size: 13px; 
-            font-weight: 500;
+        
+        /* New Compact Card Styles */
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+            align-items: stretch;
+        }
+
+        .user-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px; /* Reduced padding */
+            border: 1px solid #E5E7EB;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            position: relative; /* For absolute edit button */
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .user-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        .btn-edit-absolute {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            width: 28px;
+            height: 28px;
+            background: #F3E8FF;
+            color: #7C3AED;
+            border: none;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 13px;
+        }
+        
+        .btn-edit-absolute:hover {
+            background: #7C3AED;
+            color: white;
+        }
+
+        .user-card-avatar {
+            width: 64px; /* Smaller avatar */
+            height: 64px;
+            margin: 0 auto 12px;
+            background: #E0E7FF;
+            color: #4F46E5;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 24px;
+            object-fit: cover;
+        }
+
+        .user-info-text {
+            text-align: center;
+            margin-bottom: 12px;
+        }
+
+        .user-name {
+            font-size: 16px;
+            font-weight: 600;
+            color: #111827;
+            margin: 0 0 4px 0;
+        }
+
+        .user-email {
+            font-size: 12px;
+            color: #6B7280;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .stats-row {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            font-size: 12px;
+            margin-bottom: 12px;
+            background: #F9FAFB;
+            padding: 8px;
+            border-radius: 6px;
+        }
+
+        .skill-tags {
+            font-size: 11px;
+            color: #6B7280;
+            text-align: center;
+            height: 32px; /* Fixed height for consistency */
+            overflow: hidden;
+            margin-bottom: 15px;
+            line-height: 1.4;
+        }
+
+        .action-row {
+            margin-top: auto;
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-action-card {
+            flex: 1;
+            padding: 8px 0;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            border: 1px solid transparent;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
             transition: all 0.2s;
         }
+
         .btn-msg {
-            background: #4F46E5; 
-            color: white;
-            width: 97%;
+            background: #EEF2FF;
+            color: #4F46E5;
+            border-color: #E0E7FF;
         }
-        .btn-view {
-            background: #F3F4F6; 
+        .btn-msg:hover { background: #E0E7FF; }
+
+        .btn-profile {
+            background: white;
             color: #374151;
-            margin-top: 8px;
+            border-color: #D1D5DB;
         }
-        .btn-view:hover {
-            background: #E5E7EB;
-        }
+        .btn-profile:hover { background: #F3F4F6; }
 
         /* Modal Styles */
         .modal-overlay {
@@ -144,19 +258,6 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] == "
             align-items: center;
             gap: 8px;
         }
-        
-        /* New Button Style */
-        .btn-edit-role {
-            background: #F3E8FF !important;
-            color: #7C3AED !important;
-            margin-top: 8px;
-            margin-left: 4px;
-            border: none;
-            width: 100%;
-        }
-        .btn-edit-role:hover {
-            background: #EDE9FE !important;
-        }
     </style>
 </head>
 <body>
@@ -192,9 +293,17 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] == "
                 $stats = get_user_rating_stats($pdo, $user['id']);
                 $avg_rating = $stats['avg'];
                 $collab = get_collaborative_scores_by_user($pdo, $user['id']);
+                $dirStats = get_todays_attendance_stats($pdo, $user['id']);
             ?>
-            <div class="user-card" style="display: flex; flex-direction: column; height: 100%;">
+            <div class="user-card">
                 
+                <!-- Edit Role Absolute Button -->
+                <?php if ($is_super_admin) { ?>
+                <button onclick="openModal('<?=$user['id']?>', '<?=addslashes($user['full_name'])?>', '<?=$user['role']?>')" class="btn-edit-absolute" title="Edit Role">
+                    <i class="fa fa-pencil"></i>
+                </button>
+                <?php } ?>
+
                 <div class="user-card-avatar">
                      <?php if (!empty($user['profile_image']) && $user['profile_image'] != 'default.png' && file_exists('uploads/' . $user['profile_image'])): ?>
                         <img src="uploads/<?=$user['profile_image']?>" alt="Profile" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">
@@ -203,60 +312,38 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] == "
                      <?php endif; ?>
                 </div>
                 
-                <h3 style="margin: 0 0 5px 0; font-size: 18px; color: var(--text-dark);"><?= htmlspecialchars($user['full_name']) ?></h3>
-                
-                <?php 
-                    $roleClass = "badge-in_progress"; 
-                ?>
-                <div style="margin-bottom: 5px;">
-                     <span class="badge <?= $roleClass ?>"><?= ucfirst($user['role']) ?></span>
+                <div class="user-info-text">
+                    <h3 class="user-name"><?= htmlspecialchars($user['full_name']) ?></h3>
+                    <span class="user-email"><?= htmlspecialchars($user['username']) ?></span>
+                    <span class="badge badge-in_progress" style="font-size: 10px; padding: 2px 8px;"><?= ucfirst($user['role']) ?></span>
                 </div>
-                
-                <!-- Ratings Display -->
-                <div style="display: flex; gap: 15px; margin-left: 35%; margin-top: 5px; margin-bottom: 15px; font-size: 12px;">
+
+                <!-- Stats Row -->
+                <div class="stats-row">
                     <div style="color: #F59E0B;" title="Task Rating">
                         <i class="fa fa-star"></i> <?= $avg_rating ?>
                     </div>
+                    <div style="width: 1px; background: #E5E7EB;"></div>
                     <div style="color: #8B5CF6;" title="Collaborative Score">
                         <i class="fa fa-users"></i> <?= $collab['avg'] ?>
                     </div>
-                </div>
-
-                <div style="color: var(--text-gray); font-size: 13px; margin-bottom: 10px;">
-                    <i class="fa fa-envelope-o"></i> <?= htmlspecialchars($user['username']) ?>
-                </div>
-
-                <?php 
-                    // Get Attendance Stats for Directory
-                    $dirStats = get_todays_attendance_stats($pdo, $user['id']);
-                ?>
-                <div style="color: #4F46E5; font-size: 13px; margin-bottom: 15px; font-weight: 500;">
-                    <i class="fa fa-clock-o"></i> Total Hours: <?= $dirStats['overall_duration'] ?>
-                </div>
-
-
-                
-                <div style="margin-top: auto; padding-top: 5px;">
-                    <div style="font-size: 12px; color: var(--text-gray); margin-bottom: 10px;">
-                        <strong>Skills:</strong> 
-                        <?= !empty($user['skills']) ? htmlspecialchars(substr($user['skills'], 0, 30)) . (strlen($user['skills']) > 30 ? '...' : '') : 'Not listed' ?>
+                    <div style="width: 1px; background: #E5E7EB;"></div>
+                    <div style="color: #10B981;" title="Total Hours">
+                         <i class="fa fa-clock-o"></i> <?= str_replace('Oh ','0h ', $dirStats['overall_duration']) ?>
                     </div>
+                </div>
 
-                    <a href="messages.php?id=<?=$user['id']?>" class="user-card-action-btn btn-msg">
+                <div class="skill-tags">
+                     <?= !empty($user['skills']) ? htmlspecialchars(mb_strimwidth($user['skills'], 0, 50, "...")) : 'No skills listed' ?>
+                </div>
+
+                <!-- Action Buttons: Side by Side -->
+                <div class="action-row">
+                    <a href="messages.php?id=<?=$user['id']?>" class="btn-action-card btn-msg">
                         <i class="fa fa-comment-o" style="margin-right: 5px;"></i> Message
                     </a>
-
-                    <?php 
-                        // Super Admin gets "Edit Role" modal
-                        if ($is_super_admin) {
-                    ?>
-                    <button onclick="openModal('<?=$user['id']?>', '<?=addslashes($user['full_name'])?>', '<?=$user['role']?>')" class="user-card-action-btn btn-view btn-edit-role">
-                        <i class="fa fa-shield" style="margin-right: 5px;"></i> Edit Role
-                    </button>
-                    <?php } ?>
-
-                    <a href="user_details.php?id=<?=$user['id']?>" class="user-card-action-btn btn-view" style="margin-top: 8px;">
-                        View Profile
+                    <a href="user_details.php?id=<?=$user['id']?>" class="btn-action-card btn-profile">
+                        Profile
                     </a>
                 </div>
 
