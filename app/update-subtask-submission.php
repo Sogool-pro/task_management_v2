@@ -26,8 +26,7 @@ if ((isset($_SESSION['role']) && $_SESSION['role'] == "employee") || (isset($_SE
         /* ---- FILE UPLOAD ---- */
         if ($_FILES['submission_file']['error'] !== UPLOAD_ERR_OK) {
             $errorCode = $_FILES['submission_file']['error'];
-            $em = "Upload failed with error code $errorCode";
-            header("Location: ../my_task.php?error=$em");
+            header("Location: ../my_task.php?error=Upload failed with error code $errorCode&open_task=" . $subtask['task_id']);
             exit();
         }
 
@@ -35,14 +34,12 @@ if ((isset($_SESSION['role']) && $_SESSION['role'] == "employee") || (isset($_SE
         $ext = strtolower(pathinfo($_FILES['submission_file']['name'], PATHINFO_EXTENSION));
 
         if (!in_array($ext, $allowed)) {
-            $em = "Invalid file type";
-            header("Location: ../my_task.php?error=$em");
+            header("Location: ../my_task.php?error=Invalid file type&open_task=" . $subtask['task_id']);
             exit();
         }
 
-        if ($_FILES['submission_file']['size'] > 10 * 1024 * 1024) {
-            $em = "File too large";
-            header("Location: ../my_task.php?error=$em");
+        if ($_FILES['submission_file']['size'] > 100 * 1024 * 1024) {
+            header("Location: ../my_task.php?error=File too large (Max 100MB)&open_task=" . $subtask['task_id']);
             exit();
         }
 
@@ -55,8 +52,7 @@ if ((isset($_SESSION['role']) && $_SESSION['role'] == "employee") || (isset($_SE
         $destination = "$upload_dir/$filename";
         
         if (!move_uploaded_file($_FILES['submission_file']['tmp_name'], $destination)) {
-            $em = "Failed to move uploaded file";
-            header("Location: ../my_task.php?error=$em");
+            header("Location: ../my_task.php?error=Failed to move uploaded file&open_task=" . $subtask['task_id']);
             exit();
         }
 
@@ -77,10 +73,15 @@ if ((isset($_SESSION['role']) && $_SESSION['role'] == "employee") || (isset($_SE
         }
 
         $em = "Subtask submitted successfully";
-        header("Location: ../my_task.php?success=$em");
+        header("Location: ../my_task.php?success=$em&open_task=" . $subtask['task_id']);
         exit();
 
     }else {
+        if (empty($_POST) && $_SERVER['REQUEST_METHOD'] == 'POST' && isset($_SERVER['CONTENT_LENGTH']) && $_SERVER['CONTENT_LENGTH'] > 0) {
+             $em = "The file is too large! It exceeds the server's post_max_size limit.";
+             header("Location: ../my_task.php?error=$em");
+             exit();
+        }
         $em = "Unknown error occurred";
         header("Location: ../my_subtasks.php?error=$em");
         exit();

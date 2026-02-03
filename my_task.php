@@ -694,9 +694,14 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
                  <div id="resubmitFeedback" style="color: #4B5563;"></div>
              </div>
 
-             <form action="app/resubmit-task.php" method="POST">
+             <form action="app/resubmit-task.php" method="POST" enctype="multipart/form-data">
                 <input type="hidden" name="task_id" id="resubmit_task_id">
                 
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; font-size: 13px; font-weight: 500; color: #374151; margin-bottom: 5px;">Attach New File (Optional)</label>
+                    <input type="file" name="submission_file" class="form-input-v2" style="width: 100%;">
+                </div>
+
                 <div style="margin-bottom: 15px;">
                     <label style="display: block; font-size: 13px; font-weight: 500; color: #374151; margin-bottom: 5px;">Revision Notes <span style="color: red;">*</span></label>
                     <textarea name="revision_note" class="form-input-v2" rows="4" placeholder="Explain what changes you made..." required></textarea>
@@ -755,6 +760,26 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
             $("#resubmitModal").fadeOut(200);
         }
 
+        // Auto-open task if param exists
+        $(document).ready(function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const openTaskId = urlParams.get('open_task');
+            
+            if (openTaskId) {
+                // Remove the param from URL without reload (optional but cleaner)
+                // window.history.replaceState(null, null, window.location.pathname); 
+                
+                // Toggle task
+                toggleTask(openTaskId);
+                
+                // Scroll to task
+                const element = document.getElementById("task-card-" + openTaskId);
+                if (element) {
+                    element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }
+        });
+
         // Star Rating Functions
         var selectedScores = {};
         
@@ -777,14 +802,10 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
             }
         }
         
-        function setScore(subId, index) {
-            selectedScores[subId] = index;
-            var labels = ['Not rated', 'Poor', 'Below Average', 'Average', 'Good', 'Excellent'];
-            var label = document.getElementById('score-label-' + subId);
-            if (label) {
-                label.textContent = labels[index] + ' (' + index + '/5)';
-            }
-            highlightStars(subId, index);
+        function setScore(subId, score) {
+            selectedScores[subId] = score;
+            document.getElementById('score-label-' + subId).innerText = score + "/5";
+            resetStars(subId); // Force color update
         }
     </script>
 </body>

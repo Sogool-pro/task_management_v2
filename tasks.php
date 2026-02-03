@@ -232,7 +232,12 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] === 
             <div class="task-card" onclick="openTaskModal(<?=$task['id']?>)">
                 <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
                      <h3 class="task-title"><?= htmlspecialchars($task['title']) ?></h3>
-                     <object><a href="edit-task.php?id=<?= $task['id'] ?>" style="color: #9CA3AF;"><i class="fa fa-pencil"></i></a></object>
+                     <!-- Delete Button (Replaces Edit) -->
+                     <object>
+                        <button onclick="openDeleteModal(event, <?=$task['id']?>, '<?=htmlspecialchars($task['title'], ENT_QUOTES)?>')" style="border: none; background: none; cursor: pointer; color: #EF4444; padding: 0;">
+                            <i class="fa fa-trash"></i>
+                        </button>
+                     </object>
                 </div>
                 <div style="margin-bottom: 16px;">
                     <span class="<?= $badgeClass ?>"><?= $statusDisplay ?></span>
@@ -366,6 +371,13 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] === 
                         <div style="margin-top: 6px; font-size: 12px; color: #60A5FA;">
                             Submitted: <?= isset($task['reviewed_at']) ? date("F j, Y, g:i A", strtotime($task['reviewed_at'])) : 'Recently' ?>
                         </div>
+                        <?php if (!empty($task['submission_file'])) { ?>
+                            <div style="margin-top: 10px;">
+                                <a href="<?= htmlspecialchars($task['submission_file']) ?>" target="_blank" style="display: inline-flex; align-items: center; gap: 6px; background: white; padding: 6px 12px; border-radius: 6px; text-decoration: none; color: #2563EB; font-weight: 500; font-size: 13px; border: 1px solid #BFDBFE;">
+                                    <i class="fa fa-paperclip"></i> View Attached File
+                                </a>
+                            </div>
+                        <?php } ?>
                     </div>
                 </div>
             <?php } ?>
@@ -550,6 +562,27 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] === 
         </div>
     </div>
 
+    <!-- Delete Task Modal -->
+    <div id="deleteTaskModal" class="modal-overlay" style="display: none; z-index: 2300 !important;">
+        <div class="modal-box">
+            <div style="text-align: center;">
+                <i class="fa fa-exclamation-triangle" style="font-size: 48px; color: #EF4444; margin-bottom: 15px;"></i>
+                <h3 style="margin: 0; font-size: 20px; color: #111827;">Delete Task?</h3>
+                <p style="color: #6B7280; font-size: 14px; margin: 10px 0 20px;">
+                    Are you sure you want to delete <span id="deleteTaskTitle" style="font-weight: 600; color: #111827;"></span>? 
+                    <br>This action cannot be undone.
+                </p>
+                <form action="app/delete-task.php" method="POST">
+                    <input type="hidden" name="id" id="deleteTaskId">
+                    <div style="display: flex; justify-content: center; gap: 10px;">
+                        <button type="button" class="btn-v2 btn-white" onclick="closeDeleteModal()">Cancel</button>
+                        <button type="submit" class="btn-v2 btn-red" style="background: #EF4444;">Delete Task</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <script>
         function openTaskModal(taskId) {
             var modal = document.getElementById("modal-task-" + taskId);
@@ -584,6 +617,18 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] === 
 
         function closeActionModal(id) {
             $("#" + id).fadeOut(200);
+        }
+
+        // Delete Modal Functions
+        function openDeleteModal(event, id, title) {
+            event.stopPropagation(); // Prevent opening task details modal
+            $("#deleteTaskId").val(id);
+            $("#deleteTaskTitle").text(title);
+            $("#deleteTaskModal").css("display", "flex").hide().fadeIn(200);
+        }
+
+        function closeDeleteModal() {
+            $("#deleteTaskModal").fadeOut(200);
         }
 
          // Rating Star Logic
