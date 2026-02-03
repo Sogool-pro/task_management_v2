@@ -334,9 +334,6 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] === 
                 <div class="modal-header-section">
                 <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
                     <h2 style="margin: 0; font-size: 20px; color: #111827;"><?= htmlspecialchars($task['title']) ?></h2>
-                    <?php if($task['status'] == 'completed' && $task['rating'] > 0) { ?>
-                        <span class="subtask-rating"><i class="fa fa-star"></i> <?=$task['rating']?>/5</span>
-                    <?php } ?>
                 </div>
                 <span class="<?= $badgeClass ?>" style="font-size: 12px;"><?= $statusDisplay ?></span>
                 </div>
@@ -358,6 +355,17 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] === 
                     <div style="font-weight: 500; font-size: 14px;"><?= isset($task['created_at']) ? date("M d, Y", strtotime($task['created_at'])) : 'Unknown' ?></div>
                 </div>
             </div>
+
+            <?php if ($task['status'] == 'completed' && isset($task['rating']) && $task['rating'] > 0) { ?>
+            <div class="rating-feedback-box">
+                <div class="rating-header">
+                    <i class="fa fa-star"></i> <?= $task['rating'] ?>/5
+                </div>
+                <div class="rating-feedback-text">
+                    <?= !empty($task['review_comment']) ? htmlspecialchars($task['review_comment']) : 'No feedback provided.' ?>
+                </div>
+            </div>
+            <?php } ?>
 
             <!-- Admin Review Sections -->
             <?php if (!empty($submissionNote)) { ?>

@@ -453,3 +453,29 @@
 .rating-input i.active {
     color: #F59E0B;
 }
+
+/* Rating & Feedback Box */
+.rating-feedback-box {
+    background: #D1FAE5;  /* Yellow-50 */
+    border: 1px solid #059669; /* Yellow-100 */
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 24px;
+}
+
+.rating-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 700;
+    color: #F59E0B; /* Yellow-500 */
+    font-size: 16px;
+    margin-bottom: 8px;
+}
+
+.rating-feedback-text {
+    color: #059669; /* Gray-600 */
+    font-size: 14px;
+    line-height: 1.5;
+    font-weight: 500;
+}

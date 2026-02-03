@@ -393,13 +393,24 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
                     <div class="info-grid">
                         <div class="info-box">
                             <div class="section-label"><i class="fa fa-calendar"></i> Due Date</div>
-                            <div style="font-weight: 500; font-size: 14px;"><?= empty($task['due_date']) ? 'No Date' : date("M j", strtotime($task['due_date'])) ?></div>
+                            <div style="font-weight: 500; font-size: 14px;"><?= empty($task['due_date']) ? 'No Date' : date("M j, Y", strtotime($task['due_date'])) ?></div>
                         </div>
                         <div class="info-box">
                             <div class="section-label"><i class="fa fa-clock-o"></i> Created</div>
                             <div style="font-weight: 500; font-size: 14px;"><?= isset($task['created_at']) ? date("M j, Y", strtotime($task['created_at'])) : 'Unknown' ?></div>
                         </div>
                     </div>
+
+                    <?php if ($task['status'] == 'completed' && isset($task['rating']) && $task['rating'] > 0) { ?>
+                    <div class="rating-feedback-box">
+                        <div class="rating-header">
+                            <i class="fa fa-star"></i> <?= $task['rating'] ?>/5
+                        </div>
+                        <div class="rating-feedback-text">
+                            <?= !empty($task['review_comment']) ? htmlspecialchars($task['review_comment']) : 'No feedback provided.' ?>
+                        </div>
+                    </div>
+                    <?php } ?>
 
                     <!-- Profiles In Modal -->
                     <?php if ($leader) { 
@@ -646,7 +657,7 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
                     <?php 
                             } 
                         } 
-                        if ($task['status'] == 'completed' && !empty($task['review_comment'])) { 
+                        if ($task['status'] == 'completed' && !empty($task['review_comment']) && (empty($task['rating']) || $task['rating'] == 0)) { 
                     ?>
                         <div style="margin-top: 20px; padding: 15px; background: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 8px;">
                              <div style="font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 4px;">Admin Detailed Feedback:</div>
