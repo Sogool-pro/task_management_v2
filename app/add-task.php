@@ -52,9 +52,9 @@ if (isset($_POST['title']) && isset($_POST['description']) && isset($_POST['lead
                exit();
            }
            
-           // Max 10MB
-           if ($file['size'] > 10 * 1024 * 1024) {
-               $em = "Template file is too large. Maximum allowed size is 10MB.";
+           // Max 100MB
+           if ($file['size'] > 100 * 1024 * 1024) {
+               $em = "Template file is too large. Maximum allowed size is 100MB.";
                header("Location: ../create_task.php?error=$em");
                exit();
            }

@@ -59,8 +59,10 @@
 
 /* Details Section */
 .task-details-v2 {
-    padding: 0 24px 24px 44px; /* Indent to align with title */
-    display: none; /* Hidden by default */
+    padding: 0 24px 24px 44px;
+    /* Indent to align with title */
+    display: none;
+    /* Hidden by default */
     border-top: 1px solid #F3F4F6;
 }
 
@@ -191,7 +193,8 @@
 
 .review-box.success {
     background: #ECFDF5;
-    border: 1px solid #A7F3D0; /* Green border */
+    border: 1px solid #A7F3D0;
+    /* Green border */
     color: #065F46;
 }
 
@@ -258,14 +261,41 @@
     opacity: 0.9;
 }
 
-.btn-indigo { background: #4F46E5; color: white; }
-.btn-indigo-light { background: #EFF6FF; color: #4F46E5; }
-.btn-green { background: #10B981; color: white; }
-.btn-red { background: #EF4444; color: white; }
-.btn-yellow { background: #F59E0B; color: white; }
-.btn-white { background: white; border: 1px solid #D1D5DB; color: #374151; }
+.btn-indigo {
+    background: #4F46E5;
+    color: white;
+}
 
-.btn-sm { padding: 6px 12px; font-size: 12px; }
+.btn-indigo-light {
+    background: #EFF6FF;
+    color: #4F46E5;
+}
+
+.btn-green {
+    background: #10B981;
+    color: white;
+}
+
+.btn-red {
+    background: #EF4444;
+    color: white;
+}
+
+.btn-yellow {
+    background: #F59E0B;
+    color: white;
+}
+
+.btn-white {
+    background: white;
+    border: 1px solid #D1D5DB;
+    color: #374151;
+}
+
+.btn-sm {
+    padding: 6px 12px;
+    font-size: 12px;
+}
 
 /* Status Badges */
 .badge-v2 {
@@ -276,12 +306,36 @@
     text-transform: lowercase;
 }
 
-.badge-v2.completed { background: #D1FAE5; color: #059669; }
-.badge-v2.in_progress { background: #DBEAFE; color: #1E40AF; }
-.badge-v2.pending { background: #FEF3C7; color: #D97706; }
-.badge-v2.submitted { background: #F3E8FF; color: #7E22CE; }
-.badge-v2.revision_needed, .badge-v2.revise { background: #FFEDD5; color: #C2410C; }
-.badge-v2.rejected { background: #FEE2E2; color: #B91C1C; }
+.badge-v2.completed {
+    background: #D1FAE5;
+    color: #059669;
+}
+
+.badge-v2.in_progress {
+    background: #DBEAFE;
+    color: #1E40AF;
+}
+
+.badge-v2.pending {
+    background: #FEF3C7;
+    color: #D97706;
+}
+
+.badge-v2.submitted {
+    background: #F3E8FF;
+    color: #7E22CE;
+}
+
+.badge-v2.revision_needed,
+.badge-v2.revise {
+    background: #FFEDD5;
+    color: #C2410C;
+}
+
+.badge-v2.rejected {
+    background: #FEE2E2;
+    color: #B91C1C;
+}
 
 /* Completion Banner */
 .completion-banner {
@@ -304,7 +358,8 @@
     height: 100%;
     background: rgba(0, 0, 0, 0.5);
     z-index: 1000;
-    display: none; /* Hidden by default */
+    display: none;
+    /* Hidden by default */
     align-items: center;
     justify-content: center;
 }
@@ -315,11 +370,18 @@
     border-radius: 8px;
     width: 400px;
     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
 }
+
 /* Extra styles for Admin Review specific elements (Moved from edit-task.php) */
 .admin-review-section {
-    background: #EFF6FF; /* Blue-50 */
-    border: 1px solid #BFDBFE; /* Blue-200 */
+    background: #EFF6FF;
+    /* Blue-50 */
+    border: 1px solid #BFDBFE;
+    /* Blue-200 */
     border-radius: 8px;
     padding: 16px;
     margin-bottom: 24px;
@@ -332,32 +394,39 @@
 }
 
 .admin-review-icon {
-    color: #2563EB; /* Blue-600 */
+    color: #2563EB;
+    /* Blue-600 */
 }
 
 .admin-review-title {
     font-weight: 600;
-    color: #1E40AF; /* Blue-800 */
+    color: #1E40AF;
+    /* Blue-800 */
     font-size: 15px;
 }
 
 .admin-review-text {
     font-size: 14px;
-    color: #1E3A8A; /* Blue-900 */
-    margin-left: 28px; /* Indent to align with text start */
+    color: #1E3A8A;
+    /* Blue-900 */
+    margin-left: 28px;
+    /* Indent to align with text start */
     line-height: 1.5;
 }
 
 .awaiting-review-section {
-    background: #FAF5FF; /* Purple-50 */
-    border: 1px solid #E9D5FF; /* Purple-200 */
+    background: #FAF5FF;
+    /* Purple-50 */
+    border: 1px solid #E9D5FF;
+    /* Purple-200 */
     border-radius: 8px;
     padding: 16px;
     margin-bottom: 24px;
 }
 
 .awaiting-review-title {
-    color: #6B21A8; /* Purple-800 */
+    color: #6B21A8;
+    /* Purple-800 */
     font-weight: 600;
     display: flex;
     align-items: center;

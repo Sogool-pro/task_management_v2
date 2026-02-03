@@ -77,6 +77,11 @@ if ((isset($_SESSION['role']) && $_SESSION['role'] == "employee") || (isset($_SE
         exit();
 
     }else {
+        if (empty($_POST) && $_SERVER['REQUEST_METHOD'] == 'POST' && isset($_SERVER['CONTENT_LENGTH']) && $_SERVER['CONTENT_LENGTH'] > 0) {
+             $em = "The file is too large! It exceeds the server's post_max_size limit.";
+             header("Location: ../my_task.php?error=$em");
+             exit();
+        }
         $em = "Unknown error occurred";
         header("Location: ../my_subtasks.php?error=$em");
         exit();

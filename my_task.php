@@ -694,9 +694,14 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
                  <div id="resubmitFeedback" style="color: #4B5563;"></div>
              </div>
 
-             <form action="app/resubmit-task.php" method="POST">
+             <form action="app/resubmit-task.php" method="POST" enctype="multipart/form-data">
                 <input type="hidden" name="task_id" id="resubmit_task_id">
                 
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; font-size: 13px; font-weight: 500; color: #374151; margin-bottom: 5px;">Attach New File (Optional)</label>
+                    <input type="file" name="submission_file" class="form-input-v2" style="width: 100%;">
+                </div>
+
                 <div style="margin-bottom: 15px;">
                     <label style="display: block; font-size: 13px; font-weight: 500; color: #374151; margin-bottom: 5px;">Revision Notes <span style="color: red;">*</span></label>
                     <textarea name="revision_note" class="form-input-v2" rows="4" placeholder="Explain what changes you made..." required></textarea>

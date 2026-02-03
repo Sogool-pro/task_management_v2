@@ -17,24 +17,36 @@ if ((isset($_SESSION['role']) && $_SESSION['role'] == "employee") || (isset($_SE
         $task_id = validate_input($_POST['task_id']);
         $note = isset($_POST['revision_note']) ? validate_input($_POST['revision_note']) : null;
         
+        // Handle File Upload
+        $file_path = null;
+        if (isset($_FILES['submission_file']) && $_FILES['submission_file']['error'] === UPLOAD_ERR_OK) {
+             $allowed = ['pdf','doc','docx','xls','xlsx','png','jpg','jpeg','zip'];
+             $ext = strtolower(pathinfo($_FILES['submission_file']['name'], PATHINFO_EXTENSION));
+             
+             // Basic validation (can add more robust checks)
+             if (in_array($ext, $allowed) && $_FILES['submission_file']['size'] <= 100 * 1024 * 1024) {
+                 $upload_dir = "../uploads";
+                 if (!is_dir($upload_dir)) {
+                    mkdir($upload_dir, 0777, true);
+                 }
+                 $filename = "task_{$task_id}_resubmit_" . time() . ".$ext";
+                 if(move_uploaded_file($_FILES['submission_file']['tmp_name'], "$upload_dir/$filename")) {
+                     $file_path = "uploads/$filename";
+                 }
+             }
+        }
+
         // Update task status to 'completed' again.
-        // Clear rating, reviewed_by, but maybe keep review_comment for history? 
-        // User wants "Resubmit", implying a new attempt.
-        // Usually we want to clear the 'revision requested' state.
-        // The admin view checks for (status=completed && rating=0).
-        // So we MUST clear rating.
-        // We should PROBABLY clear review_comment too so it doesn't look like it has feedback already, 
-        // OR we prepend/append old feedback?
-        // Let's clear review_comment so it looks fresh, OR keep it but maybe the UI handles it?
-        // If I clear review_comment, the "Revision Requested" badge in my_task.php (if based on comment) might disappear?
-        // Wait, if status is 'completed', the "Revision Requested" badge won't show anyway (it shows on 'in_progress').
-        // So setting status to 'completed' is enough to hide the revision warning.
-        
-        // We also want to update submission_note with the new note.
-        
-        $sql = "UPDATE tasks SET status = 'completed', submission_note = ?, rating = NULL, review_comment = NULL, reviewed_by = NULL, reviewed_at = NOW() WHERE id = ?";
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute([$note, $task_id]);
+        if ($file_path) {
+            $sql = "UPDATE tasks SET status = 'completed', submission_note = ?, submission_file = ?, rating = NULL, review_comment = NULL, reviewed_by = NULL, reviewed_at = NOW() WHERE id = ?";
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute([$note, $file_path, $task_id]);
+        } else {
+            // Keep existing file if not replaced
+            $sql = "UPDATE tasks SET status = 'completed', submission_note = ?, rating = NULL, review_comment = NULL, reviewed_by = NULL, reviewed_at = NOW() WHERE id = ?";
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute([$note, $task_id]);
+        }
 
         // Notify Admin(s)
         $stmt2 = $pdo->prepare("SELECT id FROM users WHERE role = 'admin'");
@@ -52,6 +64,13 @@ if ((isset($_SESSION['role']) && $_SESSION['role'] == "employee") || (isset($_SE
         exit();
 
     }else {
+        // Check for post_max_size violation
+        if (empty($_POST) && $_SERVER['REQUEST_METHOD'] == 'POST' && isset($_SERVER['CONTENT_LENGTH']) && $_SERVER['CONTENT_LENGTH'] > 0) {
+             $em = "The file is too large! It exceeds the server's post_max_size limit (defined in php.ini).";
+             header("Location: ../my_task.php?error=$em");
+             exit();
+        }
+
         $em = "Unknown error occurred";
         header("Location: ../my_task.php?error=$em");
         exit();
