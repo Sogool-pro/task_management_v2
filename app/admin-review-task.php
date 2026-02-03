@@ -20,7 +20,7 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] == "
         // Get Task Info for notification
         $task = get_task_by_id($pdo, $task_id);
         if (!$task) {
-             header("Location: ../edit-task.php?id=$task_id&error=Task not found");
+             header("Location: ../tasks.php?error=Task not found");
              exit();
         }
         
@@ -48,23 +48,13 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] == "
             }
             
             $em = "Task accepted and rated successfully";
-            header("Location: ../edit-task.php?id=$task_id&success=$em");
+            header("Location: ../tasks.php?success=$em");
             exit();
 
         } else if ($action == 'revise') {
             $feedback = isset($_POST['feedback']) ? validate_input($_POST['feedback']) : '';
 
-            // Set status to 'in_progress' (or 'revise' if we had it for parent tasks, but usually 'in_progress' implies work needed)
-            // Or maybe we treat it as 'revise'. Let's check ENUM. 
-            // In my_task.php we see tasks with 'status == revise' logic for subtasks, but parent tasks?
-            // `tasks` table enum usually: pending, in_progress, completed.
-            // If I set to 'in_progress', it re-opens the task.
-            // If I want a distinct 'Revision Needed' state for parent task, I'd need to add 'revise' to enum.
-            // The mockup shows "Request Revision" modal.
-            // I'll stick to 'in_progress' for now unless I can verify enum allows 'revise'.
-            // Actually, I can check specific string value. 
-            // Let's safe bet: 'in_progress' with a notification is sufficient to "Send back".
-            
+            // Set status to 'in_progress' for revision
             $sql = "UPDATE tasks SET status = 'in_progress', review_comment = ?, reviewed_by = ?, reviewed_at = NOW() WHERE id = ?";
             $stmt = $pdo->prepare($sql);
             $stmt->execute([$feedback, $_SESSION['id'], $task_id]);
@@ -75,10 +65,10 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] == "
             }
 
             $em = "Revision requested successfully";
-            header("Location: ../edit-task.php?id=$task_id&success=$em");
+            header("Location: ../tasks.php?success=$em");
             exit();
         } else {
-            header("Location: ../edit-task.php?id=$task_id&error=Invalid action");
+            header("Location: ../tasks.php?error=Invalid action");
             exit();
         }
 

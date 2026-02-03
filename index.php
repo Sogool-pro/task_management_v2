@@ -5,6 +5,7 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
     include "DB_connection.php";
     include "app/Model/Task.php";
     include "app/Model/User.php";
+    include "app/Model/Subtask.php";
 
     // --- DATA FETCHING FOR DASHBOARD ---
     
@@ -246,9 +247,12 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
                                 <div style="font-weight: 600; color: #1F2937; font-size: 14px;">
                                     <?= htmlspecialchars($leader['full_name']) ?>
                                 </div>
-                                <div style="font-size: 11px; color: #F59E0B; font-weight: 500;">
+                                <div style="font-size: 11px; color: #F59E0B; font-weight: 500; display: flex; gap: 10px;">
                                     <?php $lStats = get_user_rating_stats($pdo, $leader['user_id']); ?>
-                                    <i class="fa fa-star"></i> <?= $lStats['avg'] ?>/5
+                                    <span><i class="fa fa-star"></i> <?= $lStats['avg'] ?>/5</span>
+
+                                    <?php $lCollab = get_collaborative_scores_by_user($pdo, $leader['user_id']); ?>
+                                    <span title="Collaborative Score" style="color: #8B5CF6;"><i class="fa fa-users"></i> Collab: <?= $lCollab['avg'] ?>/5</span>
                                 </div>
                             </div>
                         </div>
@@ -270,9 +274,12 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
                                         <div style="font-weight: 500; color: #1F2937; font-size: 13px;">
                                             <?= htmlspecialchars($member['full_name']) ?>
                                         </div>
-                                        <div style="font-size: 10px; color: #F59E0B; font-weight: 500;">
+                                        <div style="font-size: 10px; color: #F59E0B; font-weight: 500; display: flex; flex-direction: column;">
                                             <?php $mStats = get_user_rating_stats($pdo, $member['user_id']); ?>
-                                            <i class="fa fa-star"></i> <?= $mStats['avg'] ?>/5
+                                            <span><i class="fa fa-star"></i> <?= $mStats['avg'] ?>/5</span>
+
+                                            <?php $mCollab = get_collaborative_scores_by_user($pdo, $member['user_id']); ?>
+                                            <span title="Collaborative Score" style="color: #8B5CF6;"><i class="fa fa-users"></i> Collab: <?= $mCollab['avg'] ?>/5</span>
                                         </div>
                                     </div>
                                 </div>

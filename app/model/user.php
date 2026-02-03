@@ -57,13 +57,13 @@ function get_user_by_id($pdo, $id){
 }
 
 function update_profile($pdo, $data){
-	$sql = "UPDATE users SET full_name=?, password=?, phone=?, address=?, skills=?, profile_image=?, must_change_password=FALSE WHERE id=? ";
+	$sql = "UPDATE users SET full_name=?, password=?, bio=?, phone=?, address=?, skills=?, profile_image=?, must_change_password=FALSE WHERE id=? ";
 	$stmt = $pdo->prepare($sql);
 	$stmt->execute($data);
 }
 
 function update_profile_info($pdo, $data){
-	$sql = "UPDATE users SET full_name=?, phone=?, address=?, skills=?, profile_image=? WHERE id=? ";
+	$sql = "UPDATE users SET full_name=?, bio=?, phone=?, address=?, skills=?, profile_image=? WHERE id=? ";
 	$stmt = $pdo->prepare($sql);
 	$stmt->execute($data);
 }
@@ -149,4 +149,12 @@ function get_todays_attendance_stats($pdo, $user_id) {
         'overall_duration' => "{$all_h}h {$all_m}m",
         'daily_duration' => "{$day_h}h {$day_m}m"
     ];
+}
+
+function is_super_admin($user_id, $pdo) {
+    $sql = "SELECT username FROM users WHERE id = ? AND role = 'admin'";
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute([$user_id]);
+    $username = $stmt->fetchColumn();
+    return $username === 'admin';
 }

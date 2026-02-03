@@ -18,28 +18,29 @@ if ((isset($_SESSION['role']) && $_SESSION['role'] == "employee") || (isset($_SE
         $action = validate_input($_POST['action']);
         $feedback = validate_input($_POST['feedback']);
         $parent_id = isset($_POST['parent_id']) ? validate_input($_POST['parent_id']) : null;
+        $score = isset($_POST['score']) && is_numeric($_POST['score']) ? (int)$_POST['score'] : null;
 
         $subtask = get_subtask_by_id($pdo, $subtask_id);
         if (!$subtask) {
-            header("Location: ../edit-task-employee.php?error=Subtask not found&id=$parent_id");
+            header("Location: ../my_task.php?error=Subtask not found");
             exit();
         }
 
         if ($action == 'accept') {
             $status = 'completed';
-            $msg = "Your subtask submission has been ACCEPTED.";
+            $score_msg = ($score !== null) ? " Score: $score/5." : "";
+            $msg = "Your subtask submission has been ACCEPTED.$score_msg";
+            // Only allow score on accept
         } else if ($action == 'revise') {
             $status = 'revise';
-            $msg = "Your subtask submission requires REVISION. Feedback: $feedback";
-        } else if ($action == 'revise') {
-            $status = 'revise';
+            $score = null; // No score on revision
             $msg = "Your subtask submission requires REVISION. Feedback: $feedback";
         } else {
              header("Location: ../my_task.php?error=Invalid action");
              exit();
         }
 
-        update_subtask_status($pdo, $subtask_id, $status, $feedback);
+        update_subtask_status($pdo, $subtask_id, $status, $feedback, $score);
         
         // Notify the member
         insert_notification($pdo, [$msg, $subtask['member_id'], 'Subtask Review', $subtask['task_id']]);
