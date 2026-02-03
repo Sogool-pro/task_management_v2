@@ -130,14 +130,21 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
                             </div>
                         </div>
 
-                        <!-- Total Duration -->
-                        <div style="border-top: 1px solid #C7D2FE; padding-top: 8px; margin-top: 8px;">
-                             <div style="font-size: 10px; color: #6366F1; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px;">Today's Total</div>
-                             <div style="font-size: 20px; font-weight: 800; color: #4F46E5;">
-                                <?= $attStats['daily_duration'] ?>
+                        <!-- Total Duration: Split Layout -->
+                        <div style="border-top: 1px solid #C7D2FE; padding-top: 8px; margin-top: 8px; display: flex; justify-content: space-between; gap: 10px;">
+                             <!-- Left: Today -->
+                             <div style="text-align: left;">
+                                 <div style="font-size: 9px; color: #6366F1; text-transform: uppercase; font-weight: 700;">Today</div>
+                                 <div style="font-size: 16px; font-weight: 800; color: #4F46E5;">
+                                    <?= $attStats['daily_duration'] ?>
+                                 </div>
                              </div>
-                             <div style="font-size: 9px; color: #6B7280; margin-top: 2px; text-align: right;">
-                                All Time: <?= $attStats['overall_duration'] ?>
+                             <!-- Right: Overall -->
+                             <div style="text-align: right;">
+                                 <div style="font-size: 9px; color: #6B7280; text-transform: uppercase; font-weight: 700;">All Time</div>
+                                 <div style="font-size: 16px; font-weight: 800; color: #374151;">
+                                    <?= $attStats['overall_duration'] ?>
+                                 </div>
                              </div>
                         </div>
                     </div>
