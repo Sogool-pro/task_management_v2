@@ -446,6 +446,12 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
                             <img src="<?= $memImg ?>" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover;">
                             <div>
                                 <div style="font-weight: 500; font-size: 13px; color: #1F2937;"><?= htmlspecialchars($member['full_name']) ?></div>
+                                <div style="font-size: 11px; color: #6B7280; display: flex; gap: 10px; margin-top: 2px;">
+                                    <?php $mStats = get_user_rating_stats($pdo, $member['user_id']); ?>
+                                    <span><i class="fa fa-star" style="color:#F59E0B"></i> <?= $mStats['avg'] ?>/5</span>
+                                    <?php $mCollab = get_collaborative_scores_by_user($pdo, $member['user_id']); ?>
+                                    <span style="color: #8B5CF6;"><i class="fa fa-users"></i> Collab: <?= $mCollab['avg'] ?>/5</span>
+                                </div>
                             </div>
                         </div>
                         <?php } ?>
