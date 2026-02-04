@@ -7,6 +7,10 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
     $user = get_user_by_id($pdo, $_SESSION['id']);
     $collab_scores = get_collaborative_scores_by_user($pdo, $_SESSION['id']);
     $rating_stats = get_user_rating_stats($pdo, $_SESSION['id']);
+    
+    // Get total hours worked
+    $attendance_stats = get_todays_attendance_stats($pdo, $_SESSION['id']);
+    $total_hours = $attendance_stats['overall_duration'];
 ?>
 <!DOCTYPE html>
 <html>
@@ -59,28 +63,53 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
             </div>
 
             <div class="profile-content">
-                <!-- Ratings Stats Row -->
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px;">
-                    <!-- Task Rating Card -->
-                    <div style="background: #FFF7ED; padding: 20px; border-radius: 12px; border: 1px solid #FFEDD5;">
-                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 5px;">
-                            <i class="fa fa-star" style="color: #F59E0B; font-size: 24px;"></i>
-                            <span style="font-size: 28px; font-weight: 700; color: var(--text-dark);"><?= $rating_stats['avg'] ?></span>
-                            <span style="color: var(--text-gray); font-size: 14px;">/ 5.0</span>
-                        </div>
-                        <span style="font-size: 13px; color: var(--text-gray);">Task Rating (<?= $rating_stats['count'] ?> tasks)</span>
+                <!-- Compact Stats Row -->
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 30px;">
+                    
+                    <!-- Task Rating -->
+                    <div style="background: #FFF7ED; padding: 14px; border-radius: 10px; text-align: center;">
+                        <i class="fa fa-star" style="font-size: 22px; color: #F59E0B; margin-bottom: 8px;"></i>
+                        <h3 style="font-size: 22px; margin: 0; color: #92400E;"><?= $rating_stats['avg'] ?></h3>
+                        <span style="font-size: 11px; color: #92400E; font-weight: 500;">Task Rating</span>
                     </div>
                     
-                    <!-- Collaborative Score Card -->
-                    <div style="background: #F5F3FF; padding: 20px; border-radius: 12px; border: 1px solid #EDE9FE;">
-                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 5px;">
-                            <i class="fa fa-users" style="color: #8B5CF6; font-size: 24px;"></i>
-                            <span style="font-size: 28px; font-weight: 700; color: var(--text-dark);"><?= $collab_scores['avg'] ?></span>
-                            <span style="color: var(--text-gray); font-size: 14px;">/ 5.0</span>
-                        </div>
-                        <span style="font-size: 13px; color: var(--text-gray);">Collab Score (<?= $collab_scores['count'] ?> subtasks)</span>
+                    <!-- Collaborative Score -->
+                    <div style="background: #F5F3FF; padding: 14px; border-radius: 10px; text-align: center;">
+                        <i class="fa fa-users" style="font-size: 22px; color: #8B5CF6; margin-bottom: 8px;"></i>
+                        <h3 style="font-size: 22px; margin: 0; color: #6B21A8;"><?= $collab_scores['avg'] ?></h3>
+                        <span style="font-size: 11px; color: #6B21A8; font-weight: 500;">Collab Score</span>
                     </div>
+                    
+                    <!-- Total Hours -->
+                    <div style="background: #EFF6FF; padding: 14px; border-radius: 10px; text-align: center;">
+                        <i class="fa fa-clock-o" style="font-size: 22px; color: #3B82F6; margin-bottom: 8px;"></i>
+                        <h3 style="font-size: 22px; margin: 0; color: #1E40AF;"><?= str_replace('Oh ', '0h ', $total_hours) ?></h3>
+                        <span style="font-size: 11px; color: #1E40AF; font-weight: 500;">Total Hours</span>
+                    </div>
+                    
                 </div>
+                
+                <style>
+                    @media (max-width: 768px) {
+                        .profile-content > div:first-child {
+                            grid-template-columns: repeat(3, 1fr) !important;
+                            gap: 8px !important;
+                        }
+                        .profile-content > div:first-child > div {
+                            padding: 10px 6px !important;
+                        }
+                        .profile-content > div:first-child i {
+                            font-size: 18px !important;
+                            margin-bottom: 6px !important;
+                        }
+                        .profile-content > div:first-child h3 {
+                            font-size: 18px !important;
+                        }
+                        .profile-content > div:first-child span {
+                            font-size: 9px !important;
+                        }
+                    }
+                </style>
                 
                 <div class="profile-grid">
                     <!-- Left Column -->

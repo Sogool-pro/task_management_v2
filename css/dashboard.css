@@ -984,4 +984,14 @@ body {
     .profile-content {
         padding: 0 16px 40px;
     }
+    
+    /* Screenshots grid - 2 columns on mobile */
+    .grid-container {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 12px !important;
+    }
+    
+    .capture-card {
+        padding: 12px !important;
+    }
 }

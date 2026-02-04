@@ -184,7 +184,9 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
                         Tasks Deadlines for <?= date('F j, Y', strtotime($currentDate)) ?>
                     </h3>
                     
-                    <?php if (count($tasksForSelectedDate) > 0) { ?>
+                    <?php if (count($tasksForSelectedDate) > 0) { 
+                        $redirectPage = ($_SESSION['role'] == 'admin') ? 'tasks.php' : 'my_task.php';
+                    ?>
                         <?php foreach ($tasksForSelectedDate as $task) { 
                              $badgeClass = "badge-pending";
                              $statusDisplay = str_replace('_',' ',$task['status']);
@@ -213,19 +215,13 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
                                     }
                                 }
                             }
-                        ?>
-                        <div class="task-card" style="background: white; border-radius: 12px; padding: 20px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); border: 1px solid #E5E7EB; position: relative;">
                             
-                             <!-- Edit/View Button -->
-                             <?php if($_SESSION['role'] === 'admin'){ ?>
-                                <a href="edit-task.php?id=<?=$task['id']?>" style="position: absolute; top: 20px; right: 20px; color: #9CA3AF; text-decoration: none; font-size: 14px;"><i class="fa fa-pencil"></i></a>
-                             <?php } else { ?>
-                                <a href="edit-task-employee.php?id=<?=$task['id']?>" style="position: absolute; top: 20px; right: 20px; color: #9CA3AF; text-decoration: none; font-size: 14px;"><i class="fa fa-eye"></i></a>
-                             <?php } ?>
-
+                            $redirectUrl = "$redirectPage?open_task=" . $task['id'];
+                        ?>
+                        <div class="task-card" onclick="location.href='<?=$redirectUrl?>'" style="background: white; border-radius: 12px; padding: 20px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); border: 1px solid #E5E7EB; position: relative; cursor: pointer;">
+                            
                             <!-- Header -->
                             <div style="margin-bottom: 10px; display: flex; align-items: center; gap: 10px;">
-                                <i class="fa fa-chevron-right" style="color: #6B7280; font-size: 10px;"></i>
                                 <h3 style="margin: 0; font-size: 15px; font-weight: 600; color: #111827;"><?= htmlspecialchars($task['title']) ?></h3>
                                 
                                 <?php if($isSubmittedForReview) { ?>

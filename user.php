@@ -50,23 +50,23 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] == "
             border-color: #4F46E5 !important;
         }
         
-        /* New Compact Card Styles */
+        /* Compact 2-Column Card Layout */
         .grid-container {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 20px;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
             align-items: stretch;
         }
 
         .user-card {
             background: white;
-            border-radius: 12px;
-            padding: 20px; /* Reduced padding */
+            border-radius: 10px;
+            padding: 16px;
             border: 1px solid #E5E7EB;
             box-shadow: 0 1px 2px rgba(0,0,0,0.05);
             display: flex;
             flex-direction: column;
-            position: relative; /* For absolute edit button */
+            position: relative;
             transition: transform 0.2s, box-shadow 0.2s;
         }
 
@@ -77,10 +77,10 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] == "
 
         .btn-edit-absolute {
             position: absolute;
-            top: 15px;
-            right: 15px;
-            width: 28px;
-            height: 28px;
+            top: 12px;
+            right: 12px;
+            width: 26px;
+            height: 26px;
             background: #F3E8FF;
             color: #7C3AED;
             border: none;
@@ -90,7 +90,7 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] == "
             justify-content: center;
             cursor: pointer;
             transition: all 0.2s;
-            font-size: 13px;
+            font-size: 12px;
         }
         
         .btn-edit-absolute:hover {
@@ -99,9 +99,9 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] == "
         }
 
         .user-card-avatar {
-            width: 64px; /* Smaller avatar */
-            height: 64px;
-            margin: 0 auto 12px;
+            width: 56px;
+            height: 56px;
+            margin: 0 auto 10px;
             background: #E0E7FF;
             color: #4F46E5;
             border-radius: 50%;
@@ -109,61 +109,61 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] == "
             align-items: center;
             justify-content: center;
             font-weight: 600;
-            font-size: 24px;
+            font-size: 22px;
             object-fit: cover;
         }
 
         .user-info-text {
             text-align: center;
-            margin-bottom: 12px;
+            margin-bottom: 10px;
         }
 
         .user-name {
-            font-size: 16px;
+            font-size: 15px;
             font-weight: 600;
             color: #111827;
-            margin: 0 0 4px 0;
+            margin: 0 0 3px 0;
         }
 
         .user-email {
-            font-size: 12px;
+            font-size: 11px;
             color: #6B7280;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
             display: block;
         }
 
         .stats-row {
             display: flex;
             justify-content: center;
-            gap: 12px;
-            font-size: 12px;
-            margin-bottom: 12px;
+            gap: 10px;
+            font-size: 11px;
+            margin-bottom: 10px;
             background: #F9FAFB;
-            padding: 8px;
+            padding: 6px;
             border-radius: 6px;
         }
 
         .skill-tags {
-            font-size: 11px;
+            font-size: 10px;
             color: #6B7280;
             text-align: center;
-            height: 32px; /* Fixed height for consistency */
+            height: 28px;
             overflow: hidden;
-            margin-bottom: 15px;
+            margin-bottom: 12px;
             line-height: 1.4;
         }
 
         .action-row {
             margin-top: auto;
             display: flex;
-            gap: 10px;
+            gap: 8px;
         }
 
         .btn-action-card {
             flex: 1;
-            padding: 8px 0;
+            padding: 7px 0;
             border-radius: 6px;
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 600;
             border: 1px solid transparent;
             cursor: pointer;

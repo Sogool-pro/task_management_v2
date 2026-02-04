@@ -53,6 +53,136 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
     <!-- Custom CSS -->
     <link rel="stylesheet" href="css/dashboard.css">
     <link rel="stylesheet" href="css/task_redesign.css">
+    <style>
+        /* Mobile Dashboard Optimizations */
+        @media (max-width: 768px) {
+            .tasks-grid {
+                grid-template-columns: repeat(2, 1fr) !important;
+                gap: 10px !important;
+            }
+            
+            .task-card {
+                padding: 12px !important;
+                border-radius: 8px !important;
+            }
+            
+            .task-title {
+                font-size: 13px !important;
+                margin-bottom: 4px !important;
+                line-height: 1.3 !important;
+            }
+            
+            .badge-v2 {
+                font-size: 9px !important;
+                padding: 2px 6px !important;
+            }
+            
+            .preview-content div[style*="font-size: 14px"] {
+                font-size: 11px !important;
+                margin-bottom: 10px !important;
+                line-height: 1.3 !important;
+                height: 2.6em; 
+                overflow: hidden;
+            }
+            
+            .leader-box-preview {
+                min-width: unset !important;
+                width: 100% !important;
+                padding: 6px !important;
+                gap: 8px !important;
+                margin-bottom: 8px !important;
+            }
+            
+            .leader-box-preview img {
+                width: 24px !important;
+                height: 24px !important;
+            }
+            
+            .leader-box-preview div:nth-child(2) div:first-child {
+                font-size: 8px !important;
+            }
+            
+            .leader-box-preview div:nth-child(2) div:last-child {
+                font-size: 11px !important;
+            }
+
+            /* Team Members Section */
+            .preview-content div[style*="display: flex; align-items: center; gap: 8px;"] {
+                gap: 4px !important;
+            }
+            
+            .preview-content div[style*="color: #059669; font-size: 12px;"] {
+                font-size: 10px !important;
+            }
+            
+            .preview-content div[style*="font-size: 12px; font-weight: 600; color: #059669;"] {
+                font-size: 10px !important;
+            }
+
+            .preview-content img[style*="width: 32px; height: 32px;"] {
+                width: 24px !important;
+                height: 24px !important;
+            }
+            
+            .task-footer {
+                margin-top: 10px !important;
+                padding-top: 10px !important;
+                font-size: 10px !important;
+            }
+
+            /* Stats Optimization - One Row */
+            .dash-stats-grid {
+                grid-template-columns: repeat(4, 1fr) !important;
+                gap: 8px !important;
+                margin-top: 20px !important;
+            }
+
+            .stat-card {
+                padding: 10px 4px !important;
+                flex-direction: column !important;
+                text-align: center !important;
+                justify-content: center !important;
+                height: auto !important;
+                min-height: 80px !important;
+            }
+
+            .stat-card .stat-icon {
+                width: 32px !important;
+                height: 32px !important;
+                font-size: 14px !important;
+                margin: 0 auto 6px !important;
+                order: -1 !important; /* Move icon to top */
+            }
+
+            .stat-info h4 {
+                font-size: 8px !important;
+                margin-bottom: 2px !important;
+                white-space: nowrap !important;
+            }
+
+            .stat-info span {
+                font-size: 16px !important;
+            }
+
+            /* Minimize Create Task Button */
+            .tasks-section-header {
+                flex-direction: row !important;
+                justify-content: space-between !important;
+                align-items: center !important;
+            }
+
+            .btn-create-task {
+                width: auto !important;
+                padding: 6px 12px !important;
+                font-size: 11px !important;
+                display: inline-flex !important;
+                margin-top: 0 !important;
+            }
+            .btn-create-task i {
+                font-size: 10px !important;
+            }
+        }
+    </style>
 </head>
 <body>
     

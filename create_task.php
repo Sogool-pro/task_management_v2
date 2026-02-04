@@ -12,11 +12,39 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] == "
 <html>
 <head>
 	<title>Create Task | TaskFlow</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
 	<link rel="stylesheet" href="css/dashboard.css">
+    <style>
+        @media (max-width: 768px) {
+            .dash-main {
+                padding: 70px 15px 30px !important; /* Extra top for mobile header */
+                display: block !important;
+                min-height: auto !important;
+                background: white !important; /* Cleaner on mobile */
+            }
+            .dash-main > div {
+                max-width: 100% !important;
+                box-shadow: none !important;
+                border-radius: 0 !important;
+            }
+            .dash-main > div > div:first-child,
+            .dash-main form {
+                padding: 15px !important;
+            }
+            .dash-main form .form-actions {
+                flex-direction: column !important;
+            }
+            .dash-main form .form-actions button,
+            .dash-main form .form-actions a {
+                width: 100% !important;
+                flex: none !important;
+            }
+        }
+    </style>
 </head>
 <body>
     
@@ -113,7 +141,7 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] == "
                 </div>
 
                 <!-- Actions -->
-                <div style="display: flex; gap: 10px;">
+                <div class="form-actions" style="display: flex; gap: 10px;">
                     <a href="tasks.php" style="flex: 1; text-align: center; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; color: #374151; text-decoration: none; font-weight: 500; background: white;">Cancel</a>
                     <button type="submit" style="flex: 1; padding: 12px; border: none; border-radius: 8px; background: #6366F1; color: white; font-weight: 500; cursor: pointer; font-size: 14px;">Create Task</button>
                 </div>

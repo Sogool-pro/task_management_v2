@@ -174,6 +174,70 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] === 
             border-radius: 50%;
             transition: all 0.2s;
         }
+        
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .tasks-grid {
+                grid-template-columns: repeat(2, 1fr) !important;
+                gap: 10px !important;
+            }
+            
+            .task-card {
+                padding: 12px !important;
+                border-radius: 8px !important;
+            }
+            
+            .task-title {
+                font-size: 13px !important;
+                margin-bottom: 4px !important;
+                line-height: 1.3 !important;
+            }
+            
+            /* Compact Badge */
+            .badge-v2 {
+                font-size: 9px !important;
+                padding: 2px 6px !important;
+            }
+            
+            .preview-content div[style*="font-size: 14px"] {
+                font-size: 11px !important;
+                margin-bottom: 10px !important;
+                line-height: 1.3 !important;
+                height: 2.6em; /* Limit height roughly 2 lines */
+                overflow: hidden;
+            }
+            
+            .leader-box-preview {
+                min-width: unset !important;
+                width: 100% !important;
+                padding: 6px !important;
+                gap: 8px !important;
+                margin-bottom: 8px !important;
+            }
+            
+            .leader-box-preview img {
+                width: 24px !important;
+                height: 24px !important;
+            }
+            
+            .leader-box-preview div:nth-child(2) div:first-child {
+                font-size: 8px !important;
+            }
+            
+            .leader-box-preview div:nth-child(2) div:last-child {
+                font-size: 11px !important;
+            }
+            
+            .task-footer {
+                margin-top: 10px !important;
+                padding-top: 10px !important;
+                font-size: 10px !important;
+            }
+            
+             .task-footer i {
+                font-size: 10px !important;
+             }
+        }
     </style>
 </head>
 <body>
