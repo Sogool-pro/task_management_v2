@@ -7,6 +7,7 @@
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
     overflow: hidden;
     border: 1px solid #E5E7EB;
+    position: relative;
 }
 
 /* Left Sidebar (User List) */
@@ -91,7 +92,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 2px;
+    margin-bottom: 4px;
 }
 
 .chat-user-name {
@@ -100,22 +101,35 @@
     color: #111827;
 }
 
+.chat-time {
+    font-size: 11px;
+    color: #9CA3AF;
+    white-space: nowrap;
+    margin-left: 8px;
+}
+
+.chat-item-sub-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
 .chat-user-role {
     font-size: 12px;
     color: #6B7280;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
 }
 
 .chat-item-last-msg {
     font-size: 12px;
-    color: #9CA3AF;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 180px; /* Adjust based on sidebar width */
-    margin-top: 2px;
+    color: #6B7280;
+    /* Allow wrapping for full display */
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    margin-top: 0;
+    line-height: 1.4;
+    padding-right: 10px;
+    flex: 1; /* Take available width */
 }
 
 .chat-item.unread .chat-user-name {
@@ -126,11 +140,6 @@
 .chat-item.unread .chat-item-last-msg {
     color: #111827;
     font-weight: 600;
-}
-
-.chat-time {
-    font-size: 11px;
-    color: #9CA3AF;
 }
 
 /* Message Count Badge */
@@ -146,7 +155,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-left: auto;
+    margin-left: 8px;
+    flex-shrink: 0;
     box-sizing: border-box;
 }
 
@@ -326,4 +336,60 @@
     color: #4F46E5;
     font-weight: 600;
     font-size: 16px;
+}
+/* Mobile Responsive Chat */
+@media (max-width: 768px) {
+    .chat-layout {
+        height: calc(100vh - 140px); /* Adjust for header/nav */
+        border: none;
+        box-shadow: none;
+        border-radius: 0;
+    }
+
+    .chat-sidebar {
+        width: 100%;
+        border-right: none;
+        display: flex; /* Default visible */
+    }
+
+    .chat-main {
+        display: none !important; /* Hidden by default on mobile */
+        width: 100%;
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 100%;
+        background: white;
+        z-index: 10;
+    }
+
+    /* Active State: When chatting */
+    .chat-layout.mobile-chat-active .chat-sidebar {
+        display: none;
+    }
+
+    .chat-layout.mobile-chat-active .chat-main {
+        display: flex !important;
+    }
+    
+    .chat-header {
+        padding: 0 15px;
+    }
+    
+    .btn-back-chat {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        margin-right: 10px;
+        color: #6B7280;
+        cursor: pointer;
+        font-size: 16px;
+    }
+}
+
+/* Desktop: Hide back button */
+.btn-back-chat {
+    display: none;
 }

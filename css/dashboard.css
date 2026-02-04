@@ -793,3 +793,195 @@ body {
     justify-content: center;
     line-height: 1; /* reset for vertical align */
 }
+
+/* MOBILE RESPONSIVE STYLES */
+.mobile-navbar {
+    display: none; /* Hidden on Desktop */
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 60px;
+    background: #312E81; /* Dark Purple */
+    z-index: 1100;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    box-sizing: border-box;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.mobile-brand {
+    color: white;
+}
+
+.mobile-brand h2 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.mobile-brand span {
+    font-size: 11px;
+    opacity: 0.7;
+    display: block;
+    line-height: 1;
+}
+
+.mobile-toggle-btn {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 20px;
+    cursor: pointer;
+}
+
+.sidebar-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    z-index: 1000;
+    backdrop-filter: blur(2px);
+}
+
+.sidebar-overlay.active {
+    display: block;
+}
+
+/* Mobile Close Button (Inside Sidebar) */
+.mobile-close-btn {
+    display: none;
+    background: none;
+    border: none;
+    color: white; /* Gray-400 */
+    font-size: 20px;
+    cursor: pointer;
+    padding: 0;
+}
+
+.mobile-close-btn:hover {
+    color: white;
+}
+
+@media (max-width: 768px) {
+    .mobile-navbar {
+        display: flex;
+    }
+
+    .dash-sidebar {
+        top: 0; /* Full height overlay */
+        height: 100vh;
+        z-index: 2000; /* Above everything */
+        transform: translateX(-100%);
+        box-shadow: 4px 0 10px rgba(0,0,0,0.1);
+        width: 80%; /* Takes most of the screen */
+        max-width: 300px;
+    }
+    
+    .dash-sidebar.show-sidebar {
+        transform: translateX(0);
+    }
+    
+    /* Make brand visible inside sidebar again for mobile overlay */
+    .dash-sidebar .dash-brand {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+    
+    .mobile-close-btn {
+        display: block;
+    }
+
+    .dash-main {
+        margin-left: 0;
+        padding: 16px; /* Slightly tighter padding */
+        width: 100%;
+        padding-top: 76px; /* 60px navbar + 16px gap */
+        box-sizing: border-box;
+    }
+
+    /* Grids to Single Column */
+    .dash-top-grid, 
+    .dash-stats-grid,
+    .profile-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+    
+    .time-tracker-header {
+        flex-direction: row; 
+    }
+
+    /* Cards */
+    .dash-card, .stat-card {
+        padding: 16px;
+        border-radius: 12px;
+    }
+
+    /* Create Task Button - Full Width on Mobile */
+    .btn-create-task {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        margin-top: 10px; /* Spacing if wrapped */
+    }
+    
+    .tasks-section-header {
+        flex-direction: column;
+        align-items: stretch; /* Full width children */
+        gap: 10px;
+    }
+    
+    .tasks-section-header h3 {
+        margin-bottom: 0;
+    }
+
+    /* Chat responsive */
+    .chat-layout {
+        flex-direction: column;
+        height: auto;
+    }
+    
+    .chat-sidebar {
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid #E5E7EB;
+        height: 300px;
+    }
+    
+    .chat-messages {
+        height: 400px;
+    }
+    
+    /* Profile Mobile Fixes */
+    .profile-header-section {
+        flex-direction: column;
+        text-align: center;
+        top: -30px;
+        margin-bottom: 0px;
+    }
+    
+    .profile-avatar-container {
+        margin-right: 0;
+        margin-bottom: 10px;
+    }
+    
+    .profile-identity {
+        padding-top: 0;
+    }
+    
+    .profile-actions {
+        padding-top: 20px;
+        margin-bottom: 20px;
+    }
+    
+    .profile-content {
+        padding: 0 16px 40px;
+    }
+}

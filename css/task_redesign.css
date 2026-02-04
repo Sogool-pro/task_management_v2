@@ -531,9 +531,30 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-top: 20px;
-    padding-top: 16px;
-    border-top: 1px solid #F3F4F6;
     color: #6B7280;
     font-size: 13px;
+}
+
+@media (max-width: 768px) {
+    .tasks-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .task-card {
+        padding: 16px;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05); /* Lighter shadow as requested */
+    }
+    
+    .leader-box-preview {
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .modal-box {
+        width: 95%;
+    }
+    
+    .rating-header {
+        font-size: 14px;
+    }
 }

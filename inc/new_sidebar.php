@@ -1,7 +1,33 @@
-<div class="dash-sidebar">
-    <div class="dash-brand">
+<!-- Mobile Navbar (Fixed Top) -->
+<div class="mobile-navbar">
+    <div class="mobile-brand">
         <h2>TaskFlow</h2>
         <span>Management System</span>
+    </div>
+    <button class="mobile-toggle-btn" onclick="toggleSidebar()">
+        <i class="fa fa-bars"></i>
+    </button>
+</div>
+
+<!-- Overlay for mobile when sidebar is open -->
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<script>
+    function toggleSidebar() {
+        document.querySelector('.dash-sidebar').classList.toggle('show-sidebar');
+        document.querySelector('.sidebar-overlay').classList.toggle('active');
+    }
+</script>
+
+<div class="dash-sidebar">
+    <div class="dash-brand">
+        <div class="brand-content">
+            <h2>TaskFlow</h2>
+            <span>Management System</span>
+        </div>
+        <button class="mobile-close-btn" onclick="toggleSidebar()">
+            <i class="fa fa-times"></i>
+        </button>
     </div>
     
     <nav class="dash-nav">

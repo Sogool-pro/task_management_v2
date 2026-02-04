@@ -12,6 +12,7 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
 <html>
 <head>
 	<title>Messages | TaskFlow</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -65,24 +66,27 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
                         <div class="chat-item-content">
                             <div class="chat-item-header">
                                 <span class="chat-user-name"><?= htmlspecialchars($user['full_name']) ?></span>
+                                <?php if(!empty($lastMessage)) { ?>
+                                    <span class="chat-time"><?=formatChatTime($lastMessage['created_at'])?></span>
+                                <?php } ?>
+                            </div>
+                            
+                            <div class="chat-item-sub-row">
+                                <?php if(!empty($lastMessage)) { ?>
+                                    <div class="chat-item-last-msg">
+                                        <?php 
+                                            if($lastMessage['sender_id'] == $_SESSION['id']) echo "You: ";
+                                            echo htmlspecialchars($lastMessage['message']);
+                                        ?>
+                                    </div>
+                                <?php } else { ?>
+                                    <div class="chat-user-role"><?= ucfirst($user['role']) ?></div>
+                                <?php } ?>
+                                
                                 <?php if($unreadCount > 0) { ?>
                                     <span class="message-badge"><?=$unreadCount?></span>
                                 <?php } ?>
                             </div>
-                            <!-- <div class="chat-user-role"><?= ucfirst($user['role']) ?></div> -->
-                            <?php if(!empty($lastMessage)) { ?>
-                                <div class="chat-item-last-msg">
-                                    <?php 
-                                        if($lastMessage['sender_id'] == $_SESSION['id']) echo "You: ";
-                                        echo htmlspecialchars($lastMessage['message']);
-                                    ?>
-                                </div>
-                                <div class="chat-time" style="text-align: right; margin-top: -15px; font-size: 10px;">
-                                    <?=formatChatTime($lastMessage['created_at'])?>
-                                </div>
-                            <?php } else { ?>
-                                <div class="chat-user-role"><?= ucfirst($user['role']) ?></div>
-                            <?php } ?>
                         </div>
                     </div>
                     <?php 
@@ -105,6 +109,11 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
                  <div id="chatInterface" style="display: none; height: 100%; flex-direction: column;">
                      
                     <div class="chat-header">
+                        <!-- Back Button (Mobile Only) -->
+                        <div class="btn-back-chat" id="backToChatList">
+                            <i class="fa fa-arrow-left"></i>
+                        </div>
+
                         <div class="avatar-md chat-header-avatar" id="headerAvatar">
                             <!-- JS will populate this -->
                         </div>
@@ -160,6 +169,9 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
                     $(this).addClass("active");
                     $(this).removeClass("unread"); // Remove unread styling
 
+                    // Mobile Toggle Class
+                    $(".chat-layout").addClass("mobile-chat-active");
+
                     // Clear Badge logic
                     var badge = $(this).find(".message-badge");
                     if(badge.length > 0){
@@ -202,6 +214,11 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
                     // Auto scroll down will happen in loadMessages for first load
                 });
             }
+
+            // Back Button Logic
+            $("#backToChatList").click(function() {
+                $(".chat-layout").removeClass("mobile-chat-active");
+            });
 
             $("#sendBtn").click(function(){
                 sendMessage();

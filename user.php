@@ -174,11 +174,11 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] == "
         }
 
         .btn-msg {
-            background: #EEF2FF;
-            color: #4F46E5;
-            border-color: #E0E7FF;
+            background: #4F46E5;
+            color: white;
+            border-color: #4F46E5;
         }
-        .btn-msg:hover { background: #E0E7FF; }
+        .btn-msg:hover { background: #4338CA; border-color: #4338CA; }
 
         .btn-profile {
             background: white;
@@ -295,11 +295,11 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] == "
                 $collab = get_collaborative_scores_by_user($pdo, $user['id']);
                 $dirStats = get_todays_attendance_stats($pdo, $user['id']);
             ?>
-            <div class="user-card">
+            <div class="user-card" onclick="location.href='user_details.php?id=<?=$user['id']?>'" style="cursor: pointer;">
                 
                 <!-- Edit Role Absolute Button -->
                 <?php if ($is_super_admin) { ?>
-                <button onclick="openModal('<?=$user['id']?>', '<?=addslashes($user['full_name'])?>', '<?=$user['role']?>')" class="btn-edit-absolute" title="Edit Role">
+                <button onclick="event.stopPropagation(); openModal('<?=$user['id']?>', '<?=addslashes($user['full_name'])?>', '<?=$user['role']?>')" class="btn-edit-absolute" title="Edit Role">
                     <i class="fa fa-pencil"></i>
                 </button>
                 <?php } ?>
@@ -337,13 +337,10 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] == "
                      <?= !empty($user['skills']) ? htmlspecialchars(mb_strimwidth($user['skills'], 0, 50, "...")) : 'No skills listed' ?>
                 </div>
 
-                <!-- Action Buttons: Side by Side -->
+                <!-- Action Buttons: Chat Only -->
                 <div class="action-row">
-                    <a href="messages.php?id=<?=$user['id']?>" class="btn-action-card btn-msg">
-                        <i class="fa fa-comment-o" style="margin-right: 5px;"></i> Message
-                    </a>
-                    <a href="user_details.php?id=<?=$user['id']?>" class="btn-action-card btn-profile">
-                        Profile
+                    <a href="messages.php?id=<?=$user['id']?>" onclick="event.stopPropagation();" class="btn-action-card btn-msg">
+                        <i class="fa fa-comment-o" style="margin-right: 5px;"></i> Chat
                     </a>
                 </div>
 
