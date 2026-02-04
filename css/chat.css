@@ -337,6 +337,12 @@
     font-weight: 600;
     font-size: 16px;
 }
+
+/* Desktop: Hide back button by default */
+.btn-back-chat {
+    display: none;
+}
+
 /* Mobile Responsive Chat */
 @media (max-width: 768px) {
     .chat-layout {
@@ -376,8 +382,9 @@
         padding: 0 15px;
     }
     
+    /* Show back button on mobile */
     .btn-back-chat {
-        display: flex;
+        display: flex !important;
         align-items: center;
         justify-content: center;
         width: 32px;
@@ -387,9 +394,4 @@
         cursor: pointer;
         font-size: 16px;
     }
-}
-
-/* Desktop: Hide back button */
-.btn-back-chat {
-    display: none;
 }
