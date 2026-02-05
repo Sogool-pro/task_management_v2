@@ -15,51 +15,95 @@
 <body class="auth-body">
       
       <div class="auth-container">
-            <div class="auth-icon">
-                <i class="fa fa-sign-in"></i> <!-- Using sign in icon instead of logo for now -->
+            <!-- Left Side: Branding -->
+            <div class="auth-left">
+                <div class="auth-left-content">
+                    <h2>Manage tasks, track time, and boost productivity effortlessly.</h2>
+                    <p>Empower your team with real-time collaboration, smart task management, and performance insights.</p>
+                    
+                    <div class="auth-feature-list">
+                        <div class="auth-feature-item">
+                            <div class="auth-feature-icon">
+                                <i class="fa fa-check-circle-o"></i>
+                            </div>
+                            <div class="auth-feature-text">
+                                <h4>Task Management</h4>
+                                <p>Create, assign, and track tasks with subtasks and deadlines</p>
+                            </div>
+                        </div>
+                        
+                        <div class="auth-feature-item">
+                            <div class="auth-feature-icon">
+                                <i class="fa fa-clock-o"></i>
+                            </div>
+                            <div class="auth-feature-text">
+                                <h4>Time Tracking</h4>
+                                <p>Monitor work hours with automatic screen capture for accountability</p>
+                            </div>
+                        </div>
+                        
+                        <div class="auth-feature-item">
+                            <div class="auth-feature-icon">
+                                <i class="fa fa-line-chart"></i>
+                            </div>
+                            <div class="auth-feature-text">
+                                <h4>Performance Analytics</h4>
+                                <p>Track team performance with ratings and detailed reports</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <h3 class="auth-title">Welcome Back</h3>
-            <p class="auth-subtitle">Task Management System</p>
 
-            <?php if (isset($_GET['error'])) { ?>
-                <div class="alert alert-danger" role="alert">
-                    <?= htmlspecialchars($_GET['error']) ?>
+            <!-- Right Side: Login Form -->
+            <div class="auth-right">
+                <div class="auth-logos">
+                    <img src="img/logo.png" alt="Logo 1" class="auth-logo-img">
+                    <img src="img/logo2.png" alt="Logo 2" class="auth-logo-img">
                 </div>
-            <?php } ?>
-            
-            <?php if (isset($_GET['success'])) { ?>
-                <div class="alert alert-success" role="alert">
-                    <?= htmlspecialchars($_GET['success']) ?>
-                </div>
-            <?php } ?>
+                <h3 class="auth-title">Welcome Back</h3>
+                <p class="auth-subtitle">Task Management System</p>
 
-            <form method="POST" action="app/login.php">
+                <?php if (isset($_GET['error'])) { ?>
+                    <div class="alert alert-danger" role="alert">
+                        <?= htmlspecialchars($_GET['error']) ?>
+                    </div>
+                <?php } ?>
                 
-                <?php if (isset($_GET['first_time'])) { ?>
-                    <div class="auth-info-box">
-                        <strong>First time here?</strong> Create an account to explore the full-featured task management system with role-based access, time tracking, and team collaboration.
+                <?php if (isset($_GET['success'])) { ?>
+                    <div class="alert alert-success" role="alert">
+                        <?= htmlspecialchars($_GET['success']) ?>
                     </div>
                 <?php } ?>
 
-                <div class="form-group">
-                    <label class="form-label">Email</label>
-                    <input type="text" class="form-control" name="user_name" placeholder="you@example.com" required>
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label">Password</label>
-                    <input type="password" class="form-control" name="password" placeholder="........" required>
-                </div>
-                
-                <div style="margin-bottom: 15px; text-align: right;">
-                    <a href="forgot-password.php" style="color: #666; font-size: 14px; text-decoration: none;">Forgot Password?</a>
-                </div>
+                <form method="POST" action="app/login.php">
+                    
+                    <?php if (isset($_GET['first_time'])) { ?>
+                        <div class="auth-info-box">
+                            <strong>First time here?</strong> Create an account to explore the full-featured task management system with role-based access, time tracking, and team collaboration.
+                        </div>
+                    <?php } ?>
 
-                <button type="submit" class="btn-primary">Log In</button>
-            </form>
+                    <div class="form-group">
+                        <label class="form-label">Email</label>
+                        <input type="text" class="form-control" name="user_name" placeholder="you@example.com" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Password</label>
+                        <input type="password" class="form-control" name="password" placeholder="........" required>
+                    </div>
+                    
+                    <div style="margin-bottom: 15px; text-align: right;">
+                        <a href="forgot-password.php" style="color: #666; font-size: 14px; text-decoration: none;">Forgot Password?</a>
+                    </div>
 
-            <div class="auth-footer">
-                Don't have an account? <a href="signup.php" class="auth-link">Sign Up</a>
+                    <button type="submit" class="btn-primary">Log In</button>
+                </form>
+
+                <div class="auth-footer">
+                    Don't have an account? <a href="signup.php" class="auth-link">Sign Up</a>
+                </div>
             </div>
       </div>
 </body>

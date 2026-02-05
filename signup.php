@@ -15,38 +15,82 @@
 <body class="auth-body">
       
       <div class="auth-container">
-            <div class="auth-icon">
-                <i class="fa fa-user-plus"></i>
+            <!-- Left Side: Branding -->
+            <div class="auth-left">
+                <div class="auth-left-content">
+                    <h2>Start managing your tasks in minutes.</h2>
+                    <p>Create an account and get instant access to powerful task management tools and team collaboration features.</p>
+                    
+                    <div class="auth-feature-list">
+                        <div class="auth-feature-item">
+                            <div class="auth-feature-icon">
+                                <i class="fa fa-rocket"></i>
+                            </div>
+                            <div class="auth-feature-text">
+                                <h4>Easy Setup</h4>
+                                <p>Register in seconds and start collaborating with your team instantly</p>
+                            </div>
+                        </div>
+                        
+                        <div class="auth-feature-item">
+                            <div class="auth-feature-icon">
+                                <i class="fa fa-shield"></i>
+                            </div>
+                            <div class="auth-feature-text">
+                                <h4>Role-Based Access</h4>
+                                <p>Choose your role and get appropriate permissions for your workflow</p>
+                            </div>
+                        </div>
+                        
+                        <div class="auth-feature-item">
+                            <div class="auth-feature-icon">
+                                <i class="fa fa-desktop"></i>
+                            </div>
+                            <div class="auth-feature-text">
+                                <h4>Real-time Monitoring</h4>
+                                <p>Track your progress and performance with live updates 24/7</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <h3 class="auth-title">Create Account</h3>
-            <p class="auth-subtitle">Join the Task Management System</p>
 
-            <?php if (isset($_GET['error'])) { ?>
-                <div class="alert alert-danger" role="alert">
-                    <?= htmlspecialchars($_GET['error']) ?>
+            <!-- Right Side: Signup Form -->
+            <div class="auth-right">
+                <div class="auth-logos">
+                    <img src="img/logo.png" alt="Logo 1" class="auth-logo-img">
+                    <img src="img/logo2.png" alt="Logo 2" class="auth-logo-img">
                 </div>
-            <?php } ?>
+                <h3 class="auth-title">Create Account</h3>
+                <p class="auth-subtitle">Join the Task Management System</p>
 
-            <div class="auth-info-box">
-                Enter your details to create an <strong>Employee</strong> account. A secure password will be emailed to you.
-            </div>
+                <?php if (isset($_GET['error'])) { ?>
+                    <div class="alert alert-danger" role="alert">
+                        <?= htmlspecialchars($_GET['error']) ?>
+                    </div>
+                <?php } ?>
 
-            <form method="POST" action="app/signup.php">
-                <div class="form-group">
-                    <label class="form-label">Full Name</label>
-                    <input type="text" class="form-control" name="full_name" placeholder="John Doe" required>
+                <div class="auth-info-box">
+                    Enter your details to create an <strong>Employee</strong> account. A secure password will be emailed to you.
                 </div>
 
-                <div class="form-group">
-                    <label class="form-label">Email</label>
-                    <input type="text" class="form-control" name="user_name" placeholder="you@example.com" required>
-                </div>
-                
-                <button type="submit" class="btn-primary">Register & Get Password</button>
-            </form>
+                <form method="POST" action="app/signup.php">
+                    <div class="form-group">
+                        <label class="form-label">Full Name</label>
+                        <input type="text" class="form-control" name="full_name" placeholder="John Doe" required>
+                    </div>
 
-            <div class="auth-footer">
-                Already have an account? <a href="login.php" class="auth-link">Log In</a>
+                    <div class="form-group">
+                        <label class="form-label">Email</label>
+                        <input type="text" class="form-control" name="user_name" placeholder="you@example.com" required>
+                    </div>
+                    
+                    <button type="submit" class="btn-primary">Register & Get Password</button>
+                </form>
+
+                <div class="auth-footer">
+                    Already have an account? <a href="login.php" class="auth-link">Log In</a>
+                </div>
             </div>
       </div>
 </body>

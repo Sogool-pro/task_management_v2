@@ -1,8 +1,11 @@
 <!-- Mobile Navbar (Fixed Top) -->
 <div class="mobile-navbar">
     <div class="mobile-brand">
-        <h2>TaskFlow</h2>
-        <span>Management System</span>
+        <img src="img/logo.png" alt="TaskFlow" class="brand-logo-mobile">
+        <div class="mobile-brand-text">
+            <h2>TaskFlow</h2>
+            <span>Management System</span>
+        </div>
     </div>
     <button class="mobile-toggle-btn" onclick="toggleSidebar()">
         <i class="fa fa-bars"></i>
@@ -21,6 +24,7 @@
 
 <div class="dash-sidebar">
     <div class="dash-brand">
+        <img src="img/logo.png" alt="TaskFlow" class="brand-logo">
         <div class="brand-content">
             <h2>TaskFlow</h2>
             <span>Management System</span>
