@@ -2,9 +2,9 @@
 session_start();
 if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
     include "DB_connection.php";
-    include "a../model/Task.php";
-    include "a../model/user.php";
-    include "a../model/Subtask.php"; // Include subtask model
+    include "app/model/Task.php";
+    include "app/model/user.php";
+    include "app/model/Subtask.php"; // Include subtask model
 
     $tasks = get_all_tasks_by_user($pdo, $_SESSION['id']);
     $users = get_all_users($pdo); // For assigning subtasks
@@ -906,3 +906,4 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
    exit();
 }
 ?>
+

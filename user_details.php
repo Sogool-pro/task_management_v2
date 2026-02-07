@@ -2,8 +2,8 @@
 session_start();
 if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
     include "DB_connection.php";
-    include "a../model/user.php";
-    include "a../model/Task.php";
+    include "app/model/user.php";
+    include "app/model/Task.php";
 
     if (!isset($_GET['id'])) {
         header("Location: user.php");
@@ -12,7 +12,7 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
     
     $user_id = $_GET['id'];
     $user = get_user_by_id($pdo, $user_id);
-    include "a../model/Subtask.php";
+    include "app/model/Subtask.php";
     $collab_scores = get_collaborative_scores_by_user($pdo, $user_id);
 
     if ($user == 0) {
@@ -298,4 +298,5 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
    exit();
 }
 ?>
+
 

@@ -2,9 +2,9 @@
 session_start();
 if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] === "admin") {
     require_once "DB_connection.php";
-    require_once "a../model/Task.php";
-    require_once "a../model/Subtask.php";
-    require_once "a../model/user.php";
+    require_once "app/model/Task.php";
+    require_once "app/model/Subtask.php";
+    require_once "app/model/user.php";
 
     $text = "Tasks";
     // Filter Logic
@@ -759,4 +759,5 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] === 
     exit();
 }
 ?>
+
 
