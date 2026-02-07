@@ -20,7 +20,7 @@ if ((isset($_SESSION['role']) && $_SESSION['role'] == "employee") || (isset($_SE
         // Handle File Upload
         $file_path = null;
         if (isset($_FILES['submission_file']) && $_FILES['submission_file']['error'] === UPLOAD_ERR_OK) {
-             $allowed = ['pdf','doc','docx','xls','xlsx','png','jpg','jpeg','zip'];
+             $allowed = ['pdf','doc','docx','xls','xlsx','png','jpg','jpeg','zip','json'];
              $ext = strtolower(pathinfo($_FILES['submission_file']['name'], PATHINFO_EXTENSION));
              
              // Basic validation (can add more robust checks)

@@ -23,7 +23,26 @@ function insertChat($sender_id, $receiver_id, $message, $conn){
     $stmt = $conn->prepare($sql);
     $res = $stmt->execute([$sender_id, $receiver_id, $message]);
 
-    return $res;
+    return $conn->lastInsertId();
+}
+
+function insertAttachment($chat_id, $attachment_name, $conn){
+    $sql = "INSERT INTO chat_attachments (chat_id, attachment_name)
+            VALUES (?, ?)";
+    $stmt = $conn->prepare($sql);
+    $stmt->execute([$chat_id, $attachment_name]);
+}
+
+function getAttachments($chat_id, $conn){
+    $sql = "SELECT attachment_name FROM chat_attachments WHERE chat_id = ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->execute([$chat_id]);
+    
+    if($stmt->rowCount() > 0){
+        return $stmt->fetchAll(PDO::FETCH_COLUMN); // Returns array of filenames
+    }else{
+        return [];
+    }
 }
 
 function lastChat($id_1, $id_2, $conn){

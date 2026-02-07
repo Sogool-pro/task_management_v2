@@ -1,0 +1,15 @@
+<?php
+include "DB_connection.php";
+
+try {
+    $sql = "ALTER TABLE chats ADD COLUMN attachment VARCHAR(255) DEFAULT NULL";
+    $pdo->exec($sql);
+    echo "Column 'attachment' added successfully to 'chats' table.";
+} catch (PDOException $e) {
+    if (strpos($e->getMessage(), "Duplicate column name") !== false) {
+        echo "Column 'attachment' already exists.";
+    } else {
+        echo "Error: " . $e->getMessage();
+    }
+}
+?>

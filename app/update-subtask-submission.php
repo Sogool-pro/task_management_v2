@@ -30,7 +30,7 @@ if ((isset($_SESSION['role']) && $_SESSION['role'] == "employee") || (isset($_SE
             exit();
         }
 
-        $allowed = ['pdf','doc','docx','xls','xlsx','png','jpg','jpeg','zip'];
+        $allowed = ['pdf','doc','docx','xls','xlsx','png','jpg','jpeg','zip','json'];
         $ext = strtolower(pathinfo($_FILES['submission_file']['name'], PATHINFO_EXTENSION));
 
         if (!in_array($ext, $allowed)) {

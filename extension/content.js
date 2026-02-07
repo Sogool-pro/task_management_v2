@@ -40,6 +40,10 @@
                     attendanceId: response ? response.attendanceId : null
                 }, window.location.origin);
             });
+        } else if (event.data.type === 'MINIMIZE_WINDOW') {
+            chrome.runtime.sendMessage({
+                type: 'MINIMIZE_WINDOW'
+            });
         }
     });
 

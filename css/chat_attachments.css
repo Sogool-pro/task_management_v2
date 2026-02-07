@@ -1,0 +1,56 @@
+/* Attachment Styles */
+.attachment-preview {
+    display: none;
+    padding: 10px;
+    background: #f3f4f6;
+    border-top: 1px solid #e5e7eb;
+    font-size: 13px;
+    color: #374151;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.attachment-preview .file-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.attachment-preview .remove-attachment {
+    cursor: pointer;
+    color: #ef4444;
+    font-size: 16px;
+}
+
+.btn-attach {
+    background: none;
+    border: none;
+    color: #6b7280;
+    cursor: pointer;
+    padding: 8px;
+    font-size: 18px;
+    transition: color 0.2s;
+    margin-right: 5px;
+}
+
+.btn-attach:hover {
+    color: #374151;
+}
+
+.chat-input-wrapper {
+    display: flex;
+    align-items: center;
+    background: #f9fafb;
+    border: 1px solid #d1d5db;
+    border-radius: 24px;
+    padding: 5px 15px;
+    flex: 1;
+}
+
+.chat-input-wrapper input {
+    border: none;
+    background: transparent;
+    flex: 1;
+    outline: none;
+    padding: 8px 0;
+}

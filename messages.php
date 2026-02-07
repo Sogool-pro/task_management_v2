@@ -21,6 +21,7 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
     <link rel="stylesheet" href="css/dashboard.css">
     <link rel="stylesheet" href="css/chat.css">
+    <link rel="stylesheet" href="css/chat_attachments.css">
     
     <!-- jQuery for AJAX -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
@@ -76,7 +77,8 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
                                     <div class="chat-item-last-msg">
                                         <?php 
                                             if($lastMessage['sender_id'] == $_SESSION['id']) echo "You: ";
-                                            echo htmlspecialchars($lastMessage['message']);
+                                            if(!empty($lastMessage['attachment']) && empty($lastMessage['message'])) echo "<i class='fa fa-paperclip'></i> Attachment"; 
+                                            else echo htmlspecialchars($lastMessage['message']);
                                         ?>
                                     </div>
                                 <?php } else { ?>
@@ -127,8 +129,18 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
                         <!-- Messages load here via AJAX -->
                     </div>
 
+                    <!-- Attachment Preview -->
+                    <div id="attachmentPreview" class="attachment-preview">
+                        <div class="file-info">
+                            <i class="fa fa-file"></i> <span id="fileName">file.txt</span>
+                        </div>
+                        <i class="fa fa-times remove-attachment" id="removeAttachment"></i>
+                    </div>
+
                     <div class="chat-input-area">
                         <div class="chat-input-wrapper">
+                             <button type="button" class="btn-attach" id="attachBtn"><i class="fa fa-paperclip"></i></button>
+                             <input type="file" id="fileInput" style="display: none;" multiple>
                              <input type="text" id="messageInput" placeholder="Type a message...">
                         </div>
                         <button id="sendBtn" class="btn-send"><i class="fa fa-paper-plane-o"></i></button>
@@ -145,6 +157,7 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
             
             var currentChatUserId = 0;
             var loadInterval;
+            var selectedFiles = []; // Array to store multiple files
 
             // Search Filter
              $("#searchText").on("input", function(){
@@ -207,6 +220,9 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
                     $("#chatUserName").text(userName);
                     $("#chatUserRole").text(userRole);
                     $("#headerAvatar").html(avatarHtml);
+                    
+                    // Reset attachment
+                    resetAttachment();
 
                     // Load Messages immediately
                     loadMessages();
@@ -220,6 +236,90 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
                 $(".chat-layout").removeClass("mobile-chat-active");
             });
 
+            // Attachment Logic
+            $("#attachBtn").click(function(){
+                $("#fileInput").click();
+            });
+            
+            $("#fileInput").change(function(){
+                if(this.files && this.files.length > 0) {
+                    for(var i=0; i<this.files.length; i++){
+                        selectedFiles.push(this.files[i]);
+                    }
+                    updateAttachmentPreview();
+                }
+                $(this).val(""); // Clear input to allow re-selection of same file
+            });
+            
+            // Remove specific attachment
+            $(document).on("click", ".remove-file-item", function(){
+                var index = $(this).attr("data-index");
+                selectedFiles.splice(index, 1);
+                updateAttachmentPreview();
+            });
+            
+            $("#removeAttachment").click(function(){ // Clear all
+                resetAttachment();
+            });
+            
+            function updateAttachmentPreview() {
+                if(selectedFiles.length > 0) {
+                     var html = "";
+                     var totalSize = 0;
+                     for(var i=0; i<selectedFiles.length; i++){
+                         html += `<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 5px;">
+                                    <span><i class="fa fa-file"></i> ${selectedFiles[i].name}</span>
+                                    <i class="fa fa-times remove-file-item" data-index="${i}" style="cursor: pointer; color: red; margin-left: 10px;"></i>
+                                  </div>`;
+                         totalSize += selectedFiles[i].size;
+                     }
+                     
+                     // Warning if > 100MB
+                     if(totalSize > 100 * 1024 * 1024) {
+                         html += `<div style="color: red; font-size: 12px; margin-top: 5px;">Total size exceeds 100MB!</div>`;
+                     }
+
+                     $("#fileName").html(html); // We are replacing the simple span with list
+                     $("#attachmentPreview").css("display", "flex");
+                     $("#attachmentPreview").css("flex-direction", "column"); // Allow stacking
+                     $("#attachmentPreview").css("align-items", "stretch");
+                     $("#removeAttachment").show();
+                     $("#removeAttachment").attr("title", "Clear All");
+                } else {
+                    $("#attachmentPreview").hide();
+                    $("#fileName").text("");
+                }
+            }
+
+            function resetAttachment() {
+                selectedFiles = [];
+                $("#fileInput").val("");
+                $("#attachmentPreview").hide();
+            }
+
+            // Paste Event Listener
+            window.addEventListener('paste', function(e) {
+                var items = (e.clipboardData || e.originalEvent.clipboardData).items;
+                for (var i = 0; i < items.length; i++) {
+                    if (items[i].type.indexOf("image") !== -1) {
+                        var blob = items[i].getAsFile();
+                        
+                        // Create a dummy name for the pasted image
+                        var date = new Date();
+                        var fileName = "screenshot_" + date.getTime() + ".png";
+                        
+                        // We need to treat blob as file with name
+                        // A File object IS a Blob, so we can construct a File from it to keep name
+                        var file = new File([blob], fileName, {type: blob.type});
+                        
+                        selectedFiles.push(file);
+                        updateAttachmentPreview();
+                        
+                        e.preventDefault(); 
+                    }
+                }
+            });
+
             $("#sendBtn").click(function(){
                 sendMessage();
             });
@@ -230,14 +330,40 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
 
             function sendMessage() {
                 var message = $("#messageInput").val();
-                if(message == "") return;
+                
+                if(message == "" && selectedFiles.length == 0) return;
+                
+                // Total Size Check Client Side
+                var totalSize = 0;
+                for(var i=0; i<selectedFiles.length; i++){
+                    totalSize += selectedFiles[i].size;
+                }
+                if(totalSize > 100 * 1024 * 1024) {
+                    alert("Total file size exceeds 100MB limit.");
+                    return;
+                }
 
-                $.post("app/ajax/insert.php", {
-                    message: message,
-                    to_id: currentChatUserId
-                }, function(data, status){
-                    $("#messageInput").val("");
-                    loadMessages(true); // true to force scroll
+                var formData = new FormData();
+                formData.append("message", message);
+                formData.append("to_id", currentChatUserId);
+                
+                if(selectedFiles.length > 0) {
+                    for(var i=0; i<selectedFiles.length; i++){
+                        formData.append("files[]", selectedFiles[i]);
+                    }
+                }
+
+                $.ajax({
+                    url: 'app/ajax/insert.php',
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function(data) {
+                        $("#messageInput").val("");
+                        resetAttachment();
+                        loadMessages(true); // true to force scroll
+                    }
                 });
             }
 

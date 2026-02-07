@@ -69,6 +69,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             .then(status => sendResponse(status))
             .catch(err => sendResponse({ isCapturing: false }));
         return true;
+    } else if (request.type === 'MINIMIZE_WINDOW') {
+        if (sender.tab && sender.tab.windowId) {
+            chrome.windows.update(sender.tab.windowId, { state: 'minimized' });
+        }
     }
     return false;
 });

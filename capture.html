@@ -53,7 +53,7 @@
                 statusDiv.innerText = "Please select screen to share...";
                 // Direct standard API call - robust and simple
                 const stream = await navigator.mediaDevices.getDisplayMedia({
-                    video: { cursor: "always" },
+                    video: { cursor: "always", displaySurface: "monitor" },
                     audio: false
                 });
 
@@ -73,6 +73,9 @@
                 if (window.opener) {
                     window.opener.postMessage({ type: 'CAPTURE_STARTED' }, '*');
                 }
+
+                // Request minimize
+                window.postMessage({ type: 'MINIMIZE_WINDOW' }, '*');
 
                 // Start loop
                 startHeartbeat(); // Start heartbeat
