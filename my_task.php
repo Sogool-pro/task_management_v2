@@ -54,6 +54,18 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
                 }
             };
         }
+        // Vanilla auto-open fallback (works even if jQuery fails to load).
+        document.addEventListener("DOMContentLoaded", function () {
+            var params = new URLSearchParams(window.location.search);
+            var openTaskId = params.get("open_task");
+            if (openTaskId && typeof window.openTaskModal === "function") {
+                window.openTaskModal(openTaskId);
+                var el = document.getElementById("task-card-" + openTaskId);
+                if (el) {
+                    el.scrollIntoView({ behavior: "smooth", block: "center" });
+                }
+            }
+        });
     </script>
     <style>
         .tasks-grid {
@@ -361,7 +373,7 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
                     }
             ?>
             <!-- Task Card (Trigger) -->
-            <div class="task-card" onclick="openTaskModal(<?=$task['id']?>)">
+            <div class="task-card" id="task-card-<?=$task['id']?>" onclick="openTaskModal(<?=$task['id']?>)">
                 
                 <!-- Action Buttons (Admin Edit) -->
                 <?php if($_SESSION['role'] == 'admin') { ?>
