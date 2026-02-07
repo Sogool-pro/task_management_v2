@@ -34,6 +34,27 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
     <link rel="stylesheet" href="css/dashboard.css">
     <link rel="stylesheet" href="css/task_redesign.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        // Ensure global modal helpers exist even if later PHP errors truncate output.
+        if (typeof window.openTaskModal !== "function") {
+            window.openTaskModal = function(taskId) {
+                var modal = document.getElementById("modal-task-" + taskId);
+                if (modal) {
+                    modal.style.display = "flex";
+                    document.body.style.overflow = "hidden";
+                }
+            };
+        }
+        if (typeof window.closeTaskModal !== "function") {
+            window.closeTaskModal = function(taskId) {
+                var modal = document.getElementById("modal-task-" + taskId);
+                if (modal) {
+                    modal.style.display = "none";
+                    document.body.style.overflow = "auto";
+                }
+            };
+        }
+    </script>
     <style>
         .tasks-grid {
             display: grid;
