@@ -8,7 +8,7 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != "admin") {
 }
 
 include "DB_connection.php";
-include "app/Model/User.php";
+include "app/Model/user.php";
 
 // Get filter parameters
 $filter_user_id = isset($_GET['user_id']) ? intval($_GET['user_id']) : null;

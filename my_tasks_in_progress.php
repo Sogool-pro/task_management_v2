@@ -3,7 +3,7 @@ session_start();
 if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
     include "DB_connection.php";
     include "app/Model/Task.php";
-    include "app/Model/User.php";
+    include "app/Model/user.php";
 
     $tasks = get_my_tasks_in_progress($pdo, $_SESSION['id']);
 

@@ -4,7 +4,7 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] === 
     require_once "DB_connection.php";
     require_once "app/Model/Task.php";
     require_once "app/Model/Subtask.php";
-    require_once "app/Model/User.php";
+    require_once "app/Model/user.php";
 
     $text = "Tasks";
     // Filter Logic

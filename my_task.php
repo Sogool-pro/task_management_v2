@@ -3,7 +3,7 @@ session_start();
 if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
     include "DB_connection.php";
     include "app/Model/Task.php";
-    include "app/Model/User.php";
+    include "app/Model/user.php";
     include "app/Model/Subtask.php"; // Include subtask model
 
     $tasks = get_all_tasks_by_user($pdo, $_SESSION['id']);
