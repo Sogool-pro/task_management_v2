@@ -51,14 +51,16 @@ function getAttachments($chat_id, $conn){
     }
 }
 
-function table_exists($conn, $table_name){
-    try {
-        $sql = "SELECT 1 FROM information_schema.tables WHERE table_name = ?";
-        $stmt = $conn->prepare($sql);
-        $stmt->execute([$table_name]);
-        return (bool)$stmt->fetchColumn();
-    } catch (PDOException $e) {
-        return false;
+if (!function_exists('table_exists')) {
+    function table_exists($conn, $table_name){
+        try {
+            $sql = "SELECT 1 FROM information_schema.tables WHERE table_name = ?";
+            $stmt = $conn->prepare($sql);
+            $stmt->execute([$table_name]);
+            return (bool)$stmt->fetchColumn();
+        } catch (PDOException $e) {
+            return false;
+        }
     }
 }
 
