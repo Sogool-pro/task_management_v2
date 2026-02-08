@@ -5,10 +5,40 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
     include "app/model/user.php";
     include "app/model/Message.php";
     include "app/model/Group.php";
+    include "app/model/GroupMessage.php";
     
     // Fetch users for the chat list
-    $users = get_all_users($pdo);
-    $groups = get_groups_for_user($pdo, $_SESSION['id']);
+    // Fetch users for the chat list
+    $all_users = get_all_users($pdo);
+    $users = [];
+    foreach ($all_users as $user) {
+        if ($user['id'] == $_SESSION['id']) continue;
+        
+        $lastMessage = lastChat($_SESSION['id'], $user['id'], $pdo);
+        $user['last_msg_time'] = !empty($lastMessage) ? $lastMessage['created_at'] : '0000-00-00 00:00:00';
+        $user['last_message_data'] = $lastMessage; // Cache it to avoid re-querying
+        $users[] = $user;
+    }
+
+    // Sort users by last message time desc
+    usort($users, function($a, $b) {
+        return strtotime($b['last_msg_time']) - strtotime($a['last_msg_time']);
+    });
+
+    // Fetch groups
+    $all_groups = get_groups_for_user($pdo, $_SESSION['id']);
+    $groups = [];
+    if (!empty($all_groups)) {
+        foreach ($all_groups as $group) {
+            $lastGroupMsg = get_last_group_message($pdo, $group['id']);
+            $group['last_msg_time'] = !empty($lastGroupMsg) ? $lastGroupMsg['created_at'] : '0000-00-00 00:00:00';
+            $groups[] = $group;
+        }
+        // Sort groups by last message time desc
+        usort($groups, function($a, $b) {
+            return strtotime($b['last_msg_time']) - strtotime($a['last_msg_time']);
+        });
+    }
 ?>
 <!DOCTYPE html>
 <html>
@@ -28,7 +58,7 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
     <!-- jQuery for AJAX -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 </head>
-<body>
+<body style="overflow: hidden;">
     
     <!-- Sidebar -->
     <?php include "inc/new_sidebar.php"; ?>
@@ -52,9 +82,7 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
                     <?php 
                     if ($users != 0) {
                         foreach ($users as $user) {
-                            if ($user['id'] == $_SESSION['id']) continue; // Skip self
-
-                            $lastMessage = lastChat($_SESSION['id'], $user['id'], $pdo);
+                            $lastMessage = $user['last_message_data'];
                             $unreadCount = countUnreadChat($user['id'], $_SESSION['id'], $pdo);
                             $unreadClass = ($unreadCount > 0) ? "unread" : "";
                     ?>
@@ -69,9 +97,6 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
                         <div class="chat-item-content">
                             <div class="chat-item-header">
                                 <span class="chat-user-name"><?= htmlspecialchars($user['full_name']) ?></span>
-                                <?php if(!empty($lastMessage)) { ?>
-                                    <span class="chat-time"><?=formatChatTime($lastMessage['created_at'])?></span>
-                                <?php } ?>
                             </div>
                             
                             <div class="chat-item-sub-row">
@@ -91,6 +116,10 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
                                     <span class="message-badge"><?=$unreadCount?></span>
                                 <?php } ?>
                             </div>
+                            
+                            <?php if(!empty($lastMessage)) { ?>
+                                <span class="chat-time"><?=formatChatTime($lastMessage['created_at'])?></span>
+                            <?php } ?>
                         </div>
                     </div>
                     <?php 
@@ -115,7 +144,16 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
                                 </div>
                                 <div class="chat-item-sub-row">
                                     <div class="chat-user-role">Group Chat</div>
+                                    <?php 
+                                        $grpUnread = get_group_unread_count($pdo, $group['id'], $_SESSION['id']);
+                                        if($grpUnread > 0){
+                                    ?>
+                                        <span class="message-badge"><?=$grpUnread?></span>
+                                    <?php } ?>
                                 </div>
+                                <?php if(!empty($group['created_at'])) { // using cached last_msg_time from previous step ?>
+                                     <div class="chat-time"><?=formatChatTime($group['last_msg_time'])?></div>
+                                <?php } ?>
                             </div>
                         </div>
                     <?php } } else { ?>
@@ -137,17 +175,22 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
                  <div id="chatInterface" style="display: none; height: 100%; flex-direction: column;">
                      
                     <div class="chat-header">
-                        <!-- Back Button (Mobile Only) -->
-                        <div class="btn-back-chat" id="backToChatList">
-                            <i class="fa fa-arrow-left"></i>
-                        </div>
+                        <div class="chat-header-user-area" style="display:flex; align-items:center;">
+                            <!-- Back Button (Mobile Only) -->
+                            <div class="btn-back-chat" id="backToChatList">
+                                <i class="fa fa-arrow-left"></i>
+                            </div>
 
-                        <div class="avatar-md chat-header-avatar" id="headerAvatar">
-                            <!-- JS will populate this -->
+                            <div class="avatar-md chat-header-avatar" id="headerAvatar">
+                                <!-- JS will populate this -->
+                            </div>
+                            <div class="chat-header-info">
+                                <h3 id="chatUserName">User Name</h3>
+                                <span id="chatUserRole">Role</span>
+                            </div>
                         </div>
-                        <div class="chat-header-info">
-                            <h3 id="chatUserName">User Name</h3>
-                            <span id="chatUserRole">Role</span>
+                        <div class="chat-info-toggle" id="chatInfoToggle" title="Toggle Info" style="display:none;">
+                            <i class="fa fa-info-circle"></i>
                         </div>
                     </div>
                     
@@ -173,6 +216,14 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
                     </div>
                  </div>
 
+            </div>
+
+            <!-- Right Sidebar (Group Info) -->
+            <div class="chat-info-sidebar" id="rightSidebar">
+                <div class="chat-info-header">Group Info</div>
+                <div class="chat-info-content" id="rightSidebarContent">
+                    <!-- Loaded via AJAX -->
+                </div>
             </div>
 
         </div>
@@ -253,6 +304,10 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
                     $("#chatUserRole").text(userRole);
                     $("#headerAvatar").html(avatarHtml);
                     
+                    // UI Reset for User Chat
+                    $("#chatInfoToggle").hide();
+                    $("#rightSidebar").removeClass("active");
+                    
                     // Reset attachment
                     resetAttachment();
 
@@ -271,6 +326,25 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
 
                     $(".chat-layout").addClass("mobile-chat-active");
 
+                    // Clear Badge logic
+                    var badge = $(this).find(".message-badge");
+                    if(badge.length > 0){
+                         var count = parseInt(badge.text()) || 0;
+                         badge.remove(); // Remove badge from list
+
+                         // Update Sidebar Badge
+                         var sidebarBadge = $(".dash-nav-badge");
+                         if(sidebarBadge.length > 0){
+                             var currentTotal = parseInt(sidebarBadge.text()) || 0;
+                             var newTotal = currentTotal - count;
+                             if(newTotal <= 0){
+                                 sidebarBadge.remove();
+                             }else{
+                                 sidebarBadge.text(newTotal);
+                             }
+                         }
+                    }
+
                     var groupId = $(this).attr("data-group-id");
                     var groupName = $(this).attr("data-group-name");
 
@@ -283,9 +357,33 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
                     $("#chatUserName").text(groupName);
                     $("#chatUserRole").text("Group");
                     $("#headerAvatar").html('<i class="fa fa-users"></i>');
+                    
+                    // UI Set for Group Chat
+                    $("#chatInfoToggle").show();
+                    if($(window).width() > 900) {
+                        $("#rightSidebar").addClass("active");
+                    }
+                    loadGroupDetails(groupId);
+                    $("#chatInfoToggle").show(); // Show toggle for groups
+                    
+                    // Open sidebar by default for groups if desktop
+                    if($(window).width() > 900) {
+                        $("#rightSidebar").addClass("active");
+                    }
+                    loadGroupDetails(groupId);
 
                     resetAttachment();
                     loadMessages();
+                });
+            }
+
+            $("#chatInfoToggle").click(function(){
+                $("#rightSidebar").toggleClass("active");
+            });
+
+            function loadGroupDetails(groupId){
+                $.post('app/ajax/getGroupDetails.php', { group_id: groupId }, function(data){
+                    $("#rightSidebarContent").html(data);
                 });
             }
 
@@ -425,6 +523,7 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
                         $("#messageInput").val("");
                         resetAttachment();
                         loadMessages(true); // true to force scroll
+                        refreshChatLists(); // Update list order immediately
                     }
                 });
             }
@@ -455,7 +554,37 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
             }
 
             // Real-time polling
-            setInterval(loadMessages, 3000); // Check every 3 seconds
+            setInterval(function(){
+                loadMessages();
+                refreshChatLists();
+            }, 3000); // Check every 3 seconds
+
+            function refreshChatLists(){
+                // Only refresh if search is empty to avoid interrupting typing
+                if($("#searchText").val() != "") return;
+
+                $.get('app/ajax/getChatLists.php', function(data){
+                    var res = JSON.parse(data);
+                    
+                    // Preserve active state
+                    var activeUserId = currentChatType === 'user' ? currentChatUserId : 0;
+                    var activeGroupId = currentChatType === 'group' ? currentGroupId : 0;
+
+                    $("#chatList").html(res.users);
+                    $("#groupList").html(res.groups);
+
+                    // Re-apply active class
+                    if(activeUserId != 0){
+                        $(`.chat-item[data-id="${activeUserId}"]`).addClass("active");
+                    }
+                    if(activeGroupId != 0){
+                        $(`.group-item[data-group-id="${activeGroupId}"]`).addClass("active");
+                    }
+
+                    bindChatClicks();
+                    bindGroupClicks();
+                });
+            }
 
             // Auto-open chat if ID is provided in URL
             const urlParams = new URLSearchParams(window.location.search);

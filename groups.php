@@ -95,8 +95,14 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] == "
                         }
                     }
                 ?>
-                    <div style="border:1px solid #e5e7eb; border-radius:10px; padding:12px; margin-bottom:10px;">
-                        <div style="font-weight:600; color:#111827;"><?=htmlspecialchars($group['name'])?></div>
+                    <div style="border:1px solid #e5e7eb; border-radius:10px; padding:12px; margin-bottom:10px; position: relative;">
+                        <div style="font-weight:600; color:#111827; padding-right: 30px;"><?=htmlspecialchars($group['name'])?></div>
+                        <form action="app/delete-group.php" method="POST" style="position: absolute; top: 10px; right: 10px;" onsubmit="return confirm('Are you sure you want to delete this group?');">
+                            <input type="hidden" name="id" value="<?=$group['id']?>">
+                            <button type="submit" style="background: none; border: none; color: #EF4444; cursor: pointer; padding: 4px;">
+                                <i class="fa fa-trash"></i>
+                            </button>
+                        </form>
                         <div style="font-size:13px; color:#6B7280; margin-top:4px;">Leader: <?=htmlspecialchars($leader ?: 'Not set')?></div>
                         <?php if (!empty($memberNames)) { ?>
                             <div class="member-list" style="margin-top:8px;">

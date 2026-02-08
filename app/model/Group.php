@@ -75,3 +75,15 @@ function is_user_in_group($pdo, $group_id, $user_id){
     $stmt->execute([$group_id, $user_id]);
     return (bool)$stmt->fetchColumn();
 }
+
+function delete_group($pdo, $group_id){
+    $stmt = $pdo->prepare("DELETE FROM groups WHERE id = ?");
+    return $stmt->execute([$group_id]);
+}
+
+function check_group_exists($pdo, $name){
+    $stmt = $pdo->prepare("SELECT 1 FROM groups WHERE name = ?");
+    $stmt->execute([$name]);
+    return (bool)$stmt->fetchColumn();
+}
+
