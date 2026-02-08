@@ -1,18 +1,30 @@
 <?php
 
-function create_group($pdo, $name, $leader_id, $member_ids = []){
+function create_group($pdo, $name, $leader_id, $member_ids = [], $created_by = null){
+    if ($created_by === null) {
+        $created_by = $leader_id;
+    }
     $stmt = $pdo->prepare("INSERT INTO groups (name, created_by) VALUES (?, ?)");
-    $stmt->execute([$name, $leader_id]);
+    $stmt->execute([$name, $created_by]);
     $group_id = $pdo->lastInsertId();
 
     $stmt = $pdo->prepare("INSERT INTO group_members (group_id, user_id, role) VALUES (?, ?, 'leader')");
     $stmt->execute([$group_id, $leader_id]);
 
     $stmt = $pdo->prepare("INSERT INTO group_members (group_id, user_id, role) VALUES (?, ?, 'member')");
+    $unique_members = [];
     foreach ($member_ids as $id) {
-        if ((int)$id === (int)$leader_id) {
+        $id = (int)$id;
+        if ($id <= 0 || $id === (int)$leader_id) {
             continue;
         }
+        $unique_members[$id] = true;
+    }
+    // Ensure creator/admin can see and participate in the group
+    if ((int)$created_by !== (int)$leader_id) {
+        $unique_members[(int)$created_by] = true;
+    }
+    foreach (array_keys($unique_members) as $id) {
         $stmt->execute([$group_id, $id]);
     }
 

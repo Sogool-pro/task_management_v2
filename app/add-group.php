@@ -28,7 +28,8 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] == "
             exit();
         }
 
-        create_group($pdo, $group_name, $leader_id, $member_ids);
+        $created_by = (int)$_SESSION['id'];
+        create_group($pdo, $group_name, $leader_id, $member_ids, $created_by);
         $em = "Group created successfully";
         header("Location: ../groups.php?success=$em");
         exit();

@@ -118,6 +118,10 @@ if (isset($_POST['title']) && isset($_POST['description']) && $_SESSION['role'] 
            insert_notification($pdo, $notif_data);
        }
 
+       // Auto-create a task group chat (admin + leader + members)
+       $created_by = (int)$_SESSION['id'];
+       create_group($pdo, $title, $leader_id, $member_ids, $created_by);
+
        $em = "Task created successfully";
 	    header("Location: ../tasks.php?success=$em");
 	    exit();
