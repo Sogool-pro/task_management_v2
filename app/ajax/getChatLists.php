@@ -128,6 +128,10 @@ if (isset($_SESSION['id'])) {
     } 
     $groupsHtml = ob_get_clean();
 
-    echo json_encode(['users' => $usersHtml, 'groups' => $groupsHtml]);
+    echo json_encode([
+        'users' => $usersHtml, 
+        'groups' => $groupsHtml,
+        'totalUnread' => countAllUnread($_SESSION['id'], $pdo) + count_all_group_unread($pdo, $_SESSION['id'])
+    ]);
 }
 ?>

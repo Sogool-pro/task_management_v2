@@ -1,3 +1,11 @@
+<?php 
+    include_once "app/model/Message.php";
+    include_once "app/model/GroupMessage.php";
+    $dmUnread = countAllUnread($_SESSION['id'], $pdo);
+    $grpUnread = count_all_group_unread($pdo, $_SESSION['id']);
+    $totalUnread = $dmUnread + $grpUnread;
+?>
+
 <!-- Mobile Navbar (Fixed Top) -->
 <div class="mobile-navbar">
     <div class="mobile-brand">
@@ -7,9 +15,18 @@
             <span>Management System</span>
         </div>
     </div>
-    <button class="mobile-toggle-btn" onclick="toggleSidebar()">
-        <i class="fa fa-bars"></i>
-    </button>
+    
+    <div style="display: flex; align-items: center; gap: 15px;">
+        <a href="messages.php" class="mobile-msg-icon">
+            <i class="fa fa-commenting-o"></i>
+            <?php if($totalUnread > 0){ ?>
+                <span class="mobile-unread-badge"><?=$totalUnread?></span>
+            <?php } ?>
+        </a>
+        <button class="mobile-toggle-btn" onclick="toggleSidebar()">
+            <i class="fa fa-bars"></i>
+        </button>
+    </div>
 </div>
 
 <!-- Overlay for mobile when sidebar is open -->
@@ -55,13 +72,6 @@
             <a href="calendar.php" class="dash-nav-item <?= isActive('calendar.php') ?>">
                 <i class="fa fa-calendar"></i> Calendar
             </a>
-            <?php 
-                include_once "app/model/Message.php";
-                include_once "app/model/GroupMessage.php";
-                $dmUnread = countAllUnread($_SESSION['id'], $pdo);
-                $grpUnread = count_all_group_unread($pdo, $_SESSION['id']);
-                $totalUnread = $dmUnread + $grpUnread;
-            ?>
             <a href="messages.php" class="dash-nav-item <?= isActive('messages.php') ?>">
                 <i class="fa fa-comment-o"></i> Messages
                 <?php if($totalUnread > 0){ ?>
@@ -86,13 +96,6 @@
             <a href="calendar.php" class="dash-nav-item <?= isActive('calendar.php') ?>">
                 <i class="fa fa-calendar"></i> Calendar
             </a>
-            <?php 
-                include_once "app/model/Message.php";
-                include_once "app/model/GroupMessage.php";
-                $dmUnread = countAllUnread($_SESSION['id'], $pdo);
-                $grpUnread = count_all_group_unread($pdo, $_SESSION['id']);
-                $totalUnread = $dmUnread + $grpUnread;
-            ?>
             <a href="messages.php" class="dash-nav-item <?= isActive('messages.php') ?>">
                 <i class="fa fa-comment-o"></i> Messages
                 <?php if($totalUnread > 0){ ?>

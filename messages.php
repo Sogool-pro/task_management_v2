@@ -281,17 +281,29 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
                          var count = parseInt(badge.text()) || 0;
                          badge.remove(); // Remove badge from user list
 
-                         // Update Sidebar Badge
-                         var sidebarBadge = $(".dash-nav-badge");
-                         if(sidebarBadge.length > 0){
-                             var currentTotal = parseInt(sidebarBadge.text()) || 0;
-                             var newTotal = currentTotal - count;
-                             if(newTotal <= 0){
-                                 sidebarBadge.remove();
-                             }else{
-                                 sidebarBadge.text(newTotal);
-                             }
-                         }
+                          // Update Sidebar Badge
+                          var sidebarBadge = $(".dash-nav-badge");
+                          if(sidebarBadge.length > 0){
+                              var currentTotal = parseInt(sidebarBadge.text()) || 0;
+                              var newTotal = currentTotal - count;
+                              if(newTotal <= 0){
+                                  sidebarBadge.remove();
+                              }else{
+                                  sidebarBadge.text(newTotal);
+                              }
+                          }
+
+                          // Update Mobile Header Badge
+                          var mobileHeaderBadge = $(".mobile-unread-badge");
+                          if(mobileHeaderBadge.length > 0){
+                              var currentTotalHeader = parseInt(mobileHeaderBadge.text()) || 0;
+                              var newTotalHeader = currentTotalHeader - count;
+                              if(newTotalHeader <= 0){
+                                  mobileHeaderBadge.remove();
+                              }else{
+                                  mobileHeaderBadge.text(newTotalHeader);
+                              }
+                          }
                     }
 
                     // Data
@@ -350,6 +362,18 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
                                  sidebarBadge.remove();
                              }else{
                                  sidebarBadge.text(newTotal);
+                             }
+                         }
+
+                         // Update Mobile Header Badge
+                         var mobileHeaderBadge = $(".mobile-unread-badge");
+                         if(mobileHeaderBadge.length > 0){
+                             var currentTotalHeader = parseInt(mobileHeaderBadge.text()) || 0;
+                             var newTotalHeader = currentTotalHeader - count;
+                             if(newTotalHeader <= 0){
+                                 mobileHeaderBadge.remove();
+                             }else{
+                                 mobileHeaderBadge.text(newTotalHeader);
                              }
                          }
                     }
@@ -581,6 +605,28 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
 
                     $("#chatList").html(res.users);
                     $("#groupList").html(res.groups);
+
+                    // Update Global Badges (Sidebar & Mobile Header)
+                    if(res.totalUnread > 0) {
+                        // Update Sidebar Badge
+                        if($(".dash-nav-badge").length > 0) {
+                            $(".dash-nav-badge").text(res.totalUnread);
+                        } else {
+                            // Find messages link in sidebar and add badge
+                            $('.dash-nav-item[href="messages.php"]').append('<span class="dash-nav-badge">' + res.totalUnread + '</span>');
+                        }
+
+                        // Update Mobile Header Badge
+                        if($(".mobile-unread-badge").length > 0) {
+                            $(".mobile-unread-badge").text(res.totalUnread);
+                        } else {
+                            // Add badge if it doesn't exist
+                            $('.mobile-msg-icon').append('<span class="mobile-unread-badge">' + res.totalUnread + '</span>');
+                        }
+                    } else {
+                        $(".dash-nav-badge").remove();
+                        $(".mobile-unread-badge").remove();
+                    }
 
                     // Re-apply active class
                     if(activeUserId != 0){

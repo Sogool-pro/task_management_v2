@@ -58,10 +58,85 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] == "
             align-items: stretch;
         }
 
+        .header-card {
+            background: white; 
+            padding: 20px; 
+            border-radius: 12px; 
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05); 
+            margin-bottom: 24px;
+        }
+
         @media (max-width: 768px) {
             .grid-container {
                 grid-template-columns: repeat(2, 1fr) !important;
                 gap: 12px !important;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .grid-container {
+                grid-template-columns: repeat(2, 1fr) !important;
+                gap: 8px !important;
+            }
+            .dash-main {
+                padding: 10px !important;
+                padding-top: 76px !important;
+            }
+            .header-card {
+                padding: 12px !important;
+                margin-bottom: 12px !important;
+            }
+            .header-card h2 {
+                font-size: 18px !important;
+            }
+            .user-card {
+                padding: 10px !important;
+            }
+            .user-card-avatar {
+                width: 40px !important;
+                height: 40px !important;
+                font-size: 16px !important;
+            }
+            .user-name {
+                font-size: 13px !important;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+            .user-email {
+                font-size: 9px !important;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+            .stats-row {
+                gap: 5px !important;
+                padding: 4px !important;
+                font-size: 9px !important;
+                flex-wrap: wrap;
+            }
+            .skill-tags {
+                font-size: 9px !important;
+                height: 24px !important;
+            }
+            .action-row {
+                flex-direction: column !important;
+                gap: 4px !important;
+            }
+            .btn-action-card, .admin-clockout-btn {
+                padding: 5px 0 !important;
+                font-size: 10px !important;
+            }
+            .status-pill {
+                padding: 2px 6px !important;
+                font-size: 9px !important;
+            }
+            .btn-edit-absolute {
+                top: 8px !important;
+                right: 8px !important;
+                width: 22px !important;
+                height: 22px !important;
+                font-size: 10px !important;
             }
         }
 
@@ -317,7 +392,7 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] == "
     <!-- Main Content -->
     <div class="dash-main">
         
-        <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 24px;">
+        <div class="header-card">
             <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px;">
                 <h2 style="font-size: 24px; font-weight: 700; color: var(--text-dark); margin: 0;">Users Directory</h2>
                 

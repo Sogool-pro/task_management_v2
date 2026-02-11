@@ -1015,6 +1015,41 @@ body {
     color: white;
 }
 
+/* Mobile Header Message Icon */
+.mobile-msg-icon {
+    position: relative;
+    color: white;
+    font-size: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    transition: transform 0.2s;
+}
+
+.mobile-msg-icon:active {
+    transform: scale(0.9);
+}
+
+.mobile-unread-badge {
+    position: absolute;
+    top: -5px;
+    right: -8px;
+    background: #EF4444; /* Danger Red */
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+    min-width: 16px;
+    height: 16px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 4px;
+    border: 2px solid #312E81; /* Match headerbg */
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
 @media (max-width: 768px) {
     .mobile-navbar {
         display: flex;
