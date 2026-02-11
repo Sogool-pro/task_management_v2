@@ -198,18 +198,48 @@ function is_user_clocked_in($pdo, $user_id)
 
 function get_top_rated_users($pdo, $limit = 5)
 {
-    $sql = "SELECT u.id, u.full_name, u.profile_image,
-                   COUNT(t.id) as rated_task_count,
-                   ROUND(AVG(t.rating)::numeric, 1) as avg_rating
+    $sql = "SELECT u.id,
+                   u.full_name,
+                   u.profile_image,
+                   COALESCE(ts.rated_task_count, 0) AS rated_task_count,
+                   COALESCE(cs.collab_score_count, 0) AS collab_score_count,
+                   ROUND(COALESCE(ts.avg_task_rating, 0)::numeric, 1) AS avg_task_rating,
+                   ROUND(COALESCE(cs.avg_collab_rating, 0)::numeric, 1) AS avg_collab_rating,
+                   ROUND(
+                       COALESCE(
+                           (
+                               COALESCE(ts.avg_task_rating, 0) + COALESCE(cs.avg_collab_rating, 0)
+                           ) / NULLIF(
+                               (CASE WHEN ts.avg_task_rating IS NOT NULL THEN 1 ELSE 0 END) +
+                               (CASE WHEN cs.avg_collab_rating IS NOT NULL THEN 1 ELSE 0 END),
+                               0
+                           ),
+                           0
+                       )::numeric,
+                       1
+                   ) AS avg_rating
             FROM users u
-            JOIN task_assignees ta ON u.id = ta.user_id
-            JOIN tasks t ON t.id = ta.task_id
+            LEFT JOIN (
+                SELECT ta.user_id,
+                       COUNT(t.id) AS rated_task_count,
+                       AVG(t.rating) AS avg_task_rating
+                FROM task_assignees ta
+                JOIN tasks t ON t.id = ta.task_id
+                WHERE t.status = 'completed' AND t.rating > 0
+                GROUP BY ta.user_id
+            ) ts ON ts.user_id = u.id
+            LEFT JOIN (
+                SELECT s.member_id AS user_id,
+                       COUNT(s.id) AS collab_score_count,
+                       AVG(s.score) AS avg_collab_rating
+                FROM subtasks s
+                WHERE s.score IS NOT NULL AND s.score > 0
+                GROUP BY s.member_id
+            ) cs ON cs.user_id = u.id
             WHERE u.role = 'employee'
-              AND t.status = 'completed'
-              AND t.rating > 0
-            GROUP BY u.id, u.full_name, u.profile_image
-            HAVING COUNT(t.id) > 0
-            ORDER BY avg_rating DESC, rated_task_count DESC
+              AND (COALESCE(ts.rated_task_count, 0) > 0 OR COALESCE(cs.collab_score_count, 0) > 0)
+            ORDER BY avg_rating DESC,
+                     (COALESCE(ts.rated_task_count, 0) + COALESCE(cs.collab_score_count, 0)) DESC
             LIMIT ?";
     $stmt = $pdo->prepare($sql);
     $stmt->execute([$limit]);

@@ -314,7 +314,11 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
                                         <img src="<?= $avatar ?>" class="leaderboard-avatar" alt="User">
                                         <div class="leaderboard-info">
                                             <div class="leaderboard-name"><?= htmlspecialchars($u['full_name']) ?></div>
-                                            <div class="leaderboard-meta"><?= (int)$u['rated_task_count'] ?> rated task<?= ((int)$u['rated_task_count'] !== 1 ? 's' : '') ?></div>
+                                            <div class="leaderboard-meta">
+                                                <?= (int)$u['rated_task_count'] ?> task rate<?= ((int)$u['rated_task_count'] !== 1 ? 's' : '') ?>
+                                                •
+                                                <?= (int)$u['collab_score_count'] ?> collaborative rate<?= ((int)$u['collab_score_count'] !== 1 ? 's' : '') ?>
+                                            </div>
                                         </div>
                                         <div class="leaderboard-rating">
                                             <i class="fa fa-star" style="color:#F59E0B;"></i> <?= htmlspecialchars($u['avg_rating']) ?>
