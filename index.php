@@ -757,15 +757,20 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
 <script type="text/javascript">
     // Store user ID from PHP session
     var currentUserId = <?= isset($_SESSION['id']) ? $_SESSION['id'] : 'null' ?>;
+    var isEmployeeUser = <?= (isset($_SESSION['role']) && $_SESSION['role'] !== 'admin') ? 'true' : 'false' ?>;
 
     const btnIn = document.getElementById('btnTimeIn');
     const btnOut = document.getElementById('btnTimeOut');
     const statusSpan = document.getElementById('attendanceStatus');
     let attendanceId = null;
     let captureWindow = null;
+    let hasActiveAttendance = false;
+    let isAutoClockOutInProgress = false;
+    let isManualClockOutInProgress = false;
 
     // Toggle button visibility based on state
     function updateButtonState(isTimedIn) {
+        hasActiveAttendance = !!isTimedIn;
         if (!btnIn || !btnOut) return;
         if (isTimedIn) {
             btnIn.style.display = 'none';
@@ -819,11 +824,38 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
             statusSpan.style.color = ''; // Reset color
         } else if (event.data.type === 'CAPTURE_STOPPED') {
             statusSpan.textContent = 'Screen capture stopped.';
+            if (!isManualClockOutInProgress && (!event.data.reason || event.data.reason !== 'attendance_ended')) {
+                autoClockOutDueToCaptureIssue('Screen sharing stopped. You have been clocked out.');
+            }
         } else if (event.data.type === 'CAPTURE_ERROR') {
-             statusSpan.textContent = 'Capture error: ' + event.data.message;
-             statusSpan.className = 'status-error';
+             autoClockOutDueToCaptureIssue('Screen share denied/canceled. You have been clocked out.');
         }
     });
+
+    function autoClockOutDueToCaptureIssue(message) {
+        var fallbackMessage = 'You were clocked out because screen sharing was canceled or stopped.';
+        if (isAutoClockOutInProgress || isManualClockOutInProgress) return;
+        if (!hasActiveAttendance && !attendanceId) {
+            return;
+        }
+
+        isAutoClockOutInProgress = true;
+        if (statusSpan) statusSpan.textContent = 'Clocking out...';
+
+        ajax('time_out.php', '', function (res) {
+            attendanceId = null;
+            var autoMessage = (res && res.status === 'success') ? fallbackMessage : message;
+            setClockedOutUI();
+            openAutoClockOutModal(autoMessage);
+
+            var now = new Date();
+            var timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+            var elOut = document.getElementById('statTimeOut');
+            if (elOut) elOut.innerText = timeStr;
+
+            isAutoClockOutInProgress = false;
+        });
+    }
 
     // Clock In Handler
     if (btnIn) {
@@ -835,6 +867,7 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
             ajax('time_in.php', '', function (res) {
                 if (res.status === 'success') {
                     attendanceId = res.attendance_id || null;
+                    hasActiveAttendance = true;
                     
                     // Instant UI Update
                     var now = new Date();
@@ -878,6 +911,7 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
     // Actual Clock Out Logic
     function confirmClockOut() {
         document.getElementById('confirmModal').style.display = 'none';
+        isManualClockOutInProgress = true;
         
         btnOut.disabled = true;
         statusSpan.textContent = 'Clocking out...';
@@ -893,6 +927,7 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
             if (res.status === 'success') {
                 statusSpan.textContent = 'Timed out. Session ended.';
                 attendanceId = null;
+                hasActiveAttendance = false;
                 updateButtonState(false);
                 
                 // Instant UI Update
@@ -906,6 +941,7 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
                 statusSpan.style.color = '#EF4444';
                 btnOut.disabled = false;
             }
+            isManualClockOutInProgress = false;
         });
     }
     
@@ -913,11 +949,13 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
         document.getElementById('confirmModal').style.display = 'none';
     }
 
-    function setClockedOutUI() {
+    function setClockedOutUI(message, isError) {
         attendanceId = null;
+        hasActiveAttendance = false;
         updateButtonState(false);
-        statusSpan.textContent = 'Timed out. Session ended.';
-        statusSpan.style.color = '';
+        statusSpan.textContent = message || 'Timed out. Session ended.';
+        statusSpan.className = isError ? 'status-error' : '';
+        statusSpan.style.color = isError ? '#EF4444' : '';
     }
 
     // On page load, check for active attendance
@@ -942,6 +980,7 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
             if (!payload) return;
             if (payload.has_active_attendance) {
                 attendanceId = payload.attendance_id || attendanceId;
+                hasActiveAttendance = true;
                 updateButtonState(true);
                 if (statusSpan) {
                     statusSpan.textContent = 'Timed in. Monitoring active.';
@@ -958,6 +997,7 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
                 if (captureWindow && !captureWindow.closed) {
                     captureWindow.close();
                 }
+                hasActiveAttendance = false;
                 setClockedOutUI();
                 if (payload.time_out) {
                     var elOut2 = document.getElementById('statTimeOut');
@@ -995,6 +1035,51 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
     function closeModal() {
         document.getElementById('pausedModal').style.display = 'none';
     }
+
+    function shouldAskClockInConfirmation(targetHref) {
+        if (!isEmployeeUser) return false;
+        if (hasActiveAttendance) return false;
+        if (!targetHref) return false;
+        if (targetHref.startsWith('#') || targetHref.toLowerCase().startsWith('javascript:')) return false;
+
+        const targetUrl = new URL(targetHref, window.location.href);
+        const currentUrl = new URL(window.location.href);
+        return targetUrl.pathname !== currentUrl.pathname || targetUrl.search !== currentUrl.search;
+    }
+
+    function openNavClockInModal() {
+        const modal = document.getElementById('navClockInModal');
+        if (modal) modal.style.display = 'flex';
+    }
+
+    function closeNavClockInModal() {
+        const modal = document.getElementById('navClockInModal');
+        if (modal) modal.style.display = 'none';
+    }
+
+    function openAutoClockOutModal(message) {
+        var modal = document.getElementById('autoClockOutModal');
+        var text = document.getElementById('autoClockOutMessage');
+        if (text) text.textContent = message || 'You were clocked out because screen sharing was canceled or stopped.';
+        if (modal) modal.style.display = 'flex';
+    }
+
+    function closeAutoClockOutModal() {
+        var modal = document.getElementById('autoClockOutModal');
+        if (modal) modal.style.display = 'none';
+    }
+
+    if (isEmployeeUser) {
+        document.addEventListener('click', function (e) {
+            const link = e.target.closest('a[href]');
+            if (!link) return;
+            const href = link.getAttribute('href');
+            if (shouldAskClockInConfirmation(href)) {
+                e.preventDefault();
+                openNavClockInModal();
+            }
+        }, true);
+    }
 </script>
 <!-- Confirmation Modal -->
 <div id="confirmModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1001; align-items:center; justify-content:center;">
@@ -1009,6 +1094,38 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
         <div style="display:flex; gap:10px; justify-content:center;">
             <button onclick="closeConfirmModal()" style="background:#F3F4F6; color:#374151; border:none; padding:10px 20px; border-radius:8px; font-weight:600; cursor:pointer;">Cancel</button>
             <button onclick="confirmClockOut()" style="background:#EF4444; color:white; border:none; padding:10px 20px; border-radius:8px; font-weight:600; cursor:pointer;">Yes, Clock Out</button>
+        </div>
+    </div>
+</div>
+
+<!-- Navigation Warning Modal (Employee only) -->
+<div id="navClockInModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1002; align-items:center; justify-content:center;">
+    <div style="background:white; padding:30px; border-radius:12px; width:360px; text-align:center; box-shadow:0 4px 20px rgba(0,0,0,0.15);">
+        <div style="width:50px; height:50px; background:#FEF3C7; color:#D97706; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:20px; margin:0 auto 15px;">
+            <i class="fa fa-exclamation-triangle"></i>
+        </div>
+        <h3 style="margin:0 0 10px; color:#111827;">You are not clocked in</h3>
+        <p style="color:#6B7280; font-size:14px; margin-bottom:25px; line-height:1.5;">
+            Are you sure you want to go to another page? You have not clocked in yet.
+        </p>
+        <div style="display:flex; justify-content:center;">
+            <button onclick="closeNavClockInModal()" style="background:#4F46E5; color:white; border:none; padding:10px 24px; border-radius:8px; font-weight:600; cursor:pointer;">Dismiss</button>
+        </div>
+    </div>
+</div>
+
+<!-- Auto Clock Out Modal -->
+<div id="autoClockOutModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1003; align-items:center; justify-content:center;">
+    <div style="background:white; padding:30px; border-radius:12px; width:370px; text-align:center; box-shadow:0 4px 20px rgba(0,0,0,0.15);">
+        <div style="width:50px; height:50px; background:#FEE2E2; color:#DC2626; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:20px; margin:0 auto 15px;">
+            <i class="fa fa-exclamation-circle"></i>
+        </div>
+        <h3 style="margin:0 0 10px; color:#111827;">Clocked Out</h3>
+        <p id="autoClockOutMessage" style="color:#6B7280; font-size:14px; margin-bottom:25px; line-height:1.5;">
+            You were clocked out because screen sharing was canceled or stopped.
+        </p>
+        <div style="display:flex; justify-content:center;">
+            <button onclick="closeAutoClockOutModal()" style="background:#4F46E5; color:white; border:none; padding:10px 24px; border-radius:8px; font-weight:600; cursor:pointer;">Dismiss</button>
         </div>
     </div>
 </div>
