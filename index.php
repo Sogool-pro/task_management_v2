@@ -1043,6 +1043,9 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
         if (targetHref.startsWith('#') || targetHref.toLowerCase().startsWith('javascript:')) return false;
 
         const targetUrl = new URL(targetHref, window.location.href);
+        const targetPath = targetUrl.pathname.toLowerCase();
+        if (targetPath.endsWith('/logout.php') || targetPath === 'logout.php') return false;
+
         const currentUrl = new URL(window.location.href);
         return targetUrl.pathname !== currentUrl.pathname || targetUrl.search !== currentUrl.search;
     }
