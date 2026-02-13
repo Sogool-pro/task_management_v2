@@ -14,7 +14,7 @@ if (isset($_SESSION['id'])) {
        $key = "%{$_POST['key']}%";
      
        $sql = "SELECT * FROM users
-               WHERE full_name ILIKE ? OR username ILIKE ?";
+               WHERE LOWER(full_name) LIKE LOWER(?) OR LOWER(username) LIKE LOWER(?)";
        $stmt = $pdo->prepare($sql);
        $stmt->execute([$key, $key]);
 
@@ -90,9 +90,9 @@ if (isset($_SESSION['id'])) {
        $groupSql = "SELECT g.*
                     FROM groups g
                     INNER JOIN group_members gm ON g.id = gm.group_id
-                    WHERE gm.user_id = ?
-                      AND g.name ILIKE ?
-                    ORDER BY g.id DESC";
+                     WHERE gm.user_id = ?
+                       AND LOWER(g.name) LIKE LOWER(?)
+                     ORDER BY g.id DESC";
        $groupStmt = $pdo->prepare($groupSql);
        $groupStmt->execute([$_SESSION['id'], $key]);
        $groups = $groupStmt->fetchAll();

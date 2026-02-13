@@ -223,9 +223,11 @@ function check_group_exists($pdo, $name)
 
 function get_top_rated_groups($pdo, $limit = 5)
 {
+    $limit = max(1, (int)$limit);
+
     $sql = "SELECT g.id, g.name as group_name,
                    COUNT(DISTINCT gm.user_id) as member_count,
-                   ROUND(AVG(t.rating)::numeric, 1) as avg_rating,
+                   ROUND(AVG(t.rating), 1) as avg_rating,
                    COUNT(DISTINCT t.id) as rated_task_count
             FROM groups g
             JOIN group_members gm ON gm.group_id = g.id
@@ -234,11 +236,12 @@ function get_top_rated_groups($pdo, $limit = 5)
             WHERE g.type = 'group'
               AND t.status = 'completed'
               AND t.rating > 0
-            GROUP BY g.id, g.name
-            HAVING COUNT(DISTINCT t.id) > 0
-            ORDER BY avg_rating DESC, rated_task_count DESC
-            LIMIT ?";
+             GROUP BY g.id, g.name
+             HAVING COUNT(DISTINCT t.id) > 0
+             ORDER BY avg_rating DESC, rated_task_count DESC
+             LIMIT ?";
     $stmt = $pdo->prepare($sql);
-    $stmt->execute([$limit]);
+    $stmt->bindValue(1, $limit, PDO::PARAM_INT);
+    $stmt->execute();
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }

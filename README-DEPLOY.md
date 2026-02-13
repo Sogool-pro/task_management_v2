@@ -11,7 +11,7 @@ This guide is written for beginners. Follow it step by step.
 ## 2. What you need before starting
 
 - PHP 8.1 or higher
-- PostgreSQL database
+- MySQL/MariaDB database
 - Web server (Apache in XAMPP is fine)
 - SMTP account for emails (for example Gmail App Password)
 
@@ -25,11 +25,11 @@ This guide is written for beginners. Follow it step by step.
 4. Edit `.env.local` and set real values:
    - `APP_ENV=development`
    - `APP_URL=http://localhost/task_management_v2`
-   - `PGHOST`, `PGPORT`, `PGDATABASE`, `PGUSER`, `PGPASSWORD`
+   - `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASS`
    - `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_FROM_ADDRESS`, `MAIL_FROM_NAME`
 5. Create database (if needed) and import schema/data:
-   - `createdb -U your_db_user your_db_name`
-   - `psql -U your_db_user -d your_db_name -f task_management_db.sql`
+   - `mysql -u your_db_user -p -e "CREATE DATABASE IF NOT EXISTS your_db_name CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"`
+   - `mysql -u your_db_user -p your_db_name < task_management_db_mysql.sql`
 6. Open the app:
    - `http://localhost/task_management_v2/login.php`
 
@@ -99,4 +99,3 @@ If email fails, check:
 6. Screenshots/uploads are being saved correctly.
 
 If all 6 pass, your deployment is in good shape.
-

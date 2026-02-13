@@ -84,7 +84,7 @@ function get_leader_feedback_for_task($pdo, $task_id, $leader_id)
             FROM leader_feedback lf
             JOIN users u ON u.id = lf.member_id
             WHERE lf.task_id = ? AND lf.leader_id = ?
-            ORDER BY lf.updated_at DESC NULLS LAST, lf.created_at DESC";
+            ORDER BY (lf.updated_at IS NULL) ASC, lf.updated_at DESC, lf.created_at DESC";
     $stmt = $pdo->prepare($sql);
     $stmt->execute([(int)$task_id, (int)$leader_id]);
     return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
@@ -118,10 +118,10 @@ function upsert_leader_feedback($pdo, $task_id, $leader_id, $member_id, $rating,
 
     $sql = "INSERT INTO leader_feedback (task_id, leader_id, member_id, rating, comment, created_at, updated_at)
             VALUES (?, ?, ?, ?, ?, NOW(), NOW())
-            ON CONFLICT (task_id, leader_id, member_id)
-            DO UPDATE SET rating = EXCLUDED.rating,
-                          comment = EXCLUDED.comment,
-                          updated_at = NOW()";
+            ON DUPLICATE KEY UPDATE
+                rating = VALUES(rating),
+                comment = VALUES(comment),
+                updated_at = NOW()";
     $stmt = $pdo->prepare($sql);
     return $stmt->execute([(int)$task_id, (int)$leader_id, (int)$member_id, (int)$rating, $comment]);
 }

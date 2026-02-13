@@ -112,14 +112,15 @@ function countAllUnread($receiver_id, $conn){
 function opend($id_1, $conn, $chats){
     foreach ($chats as $chat) {
         if ($chat['opened'] == false && $chat['receiver_id'] == $id_1) {
-            $opened = true;
+            $driver = $conn->getAttribute(PDO::ATTR_DRIVER_NAME);
+            $openedValue = ($driver === 'pgsql') ? true : 1;
             $chat_id = $chat['chat_id'];
 
             $sql = "UPDATE chats
                     SET opened = ?
                     WHERE chat_id = ?";
             $stmt = $conn->prepare($sql);
-            $stmt->execute([$opened ? 'true' : 'false', $chat_id]);
+            $stmt->execute([$openedValue, $chat_id]);
         }
     }
 }

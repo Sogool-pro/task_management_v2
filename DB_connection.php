@@ -35,29 +35,24 @@ try {
         $query = [];
         parse_str($parts['query'] ?? '', $query);
 
-        $host = $parts['host'] ?? 'postgres.railway.internal';
-        $port = $parts['port'] ?? 5432;
+        $host = $parts['host'] ?? 'localhost';
+        $port = $parts['port'] ?? 3306;
         $dbName = ltrim($parts['path'] ?? '', '/');
         $user = $parts['user'] ?? '';
         $pass = $parts['pass'] ?? '';
-        $sslmode = $query['sslmode'] ?? (getenv('PGSSLMODE') ?: (getenv('RAILWAY_ENVIRONMENT') ? 'require' : null));
     } else {
-        $host = getenv('PGHOST') ?: 'localhost';
-        $port = getenv('PGPORT') ?: 5432;
-        $dbName = getenv('PGDATABASE') ?: 'task_management_db';
-        $user = getenv('PGUSER') ?: 'postgres';
-        $pass = getenv('PGPASSWORD') ?: 'admin';
-        $sslmode = getenv('PGSSLMODE') ?: null;
+        $host = getenv('DB_HOST') ?: (getenv('PGHOST') ?: 'localhost');
+        $port = getenv('DB_PORT') ?: (getenv('PGPORT') ?: 3306);
+        $dbName = getenv('DB_NAME') ?: (getenv('PGDATABASE') ?: 'task_management_db');
+        $user = getenv('DB_USER') ?: (getenv('PGUSER') ?: 'root');
+        $pass = getenv('DB_PASS') ?: (getenv('PGPASSWORD') ?: '');
     }
 
     if (($host === 'localhost' || $host === '127.0.0.1' || $host === '::1') && getenv('RAILWAY_ENVIRONMENT')) {
-        die("Database connection failed: missing Railway Postgres environment variables (DATABASE_URL/PGHOST/etc).");
+        die("Database connection failed: missing database environment variables (DATABASE_URL/DB_HOST/etc).");
     }
 
-    $dsn = "pgsql:host={$host};port={$port};dbname={$dbName}";
-    if ($sslmode) {
-        $dsn .= ";sslmode={$sslmode}";
-    }
+    $dsn = "mysql:host={$host};port={$port};dbname={$dbName};charset=utf8mb4";
 
     $pdo = new PDO($dsn, $user, $pass);
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
