@@ -1,10 +1,11 @@
 CREATE TABLE IF NOT EXISTS chat_attachments (
-  id SERIAL PRIMARY KEY,
-  chat_id INTEGER NOT NULL,
-  attachment_name TEXT NOT NULL,
-  created_at TIMESTAMP DEFAULT NOW(),
-  CONSTRAINT fk_chat
+  attachment_id INT NOT NULL AUTO_INCREMENT,
+  chat_id INT NOT NULL,
+  attachment_name VARCHAR(255) NOT NULL,
+  CONSTRAINT chat_attachments_pkey PRIMARY KEY (attachment_id),
+  CONSTRAINT chat_attachments_chat_id_fkey
     FOREIGN KEY (chat_id)
     REFERENCES chats(chat_id)
     ON DELETE CASCADE
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
