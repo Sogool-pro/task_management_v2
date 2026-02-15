@@ -10,8 +10,8 @@ let apiUrl = null;
 // Notify background that offscreen is ready
 chrome.runtime.sendMessage({ type: 'OFFSCREEN_READY' });
 
-const MIN_INTERVAL = 20 * 1000; // 20 seconds
-const MAX_INTERVAL = 30 * 1000; // 30 seconds
+const MIN_INTERVAL = 20 * 60 * 1000; // 20 minutes
+const MAX_INTERVAL = 30 * 60 * 1000; // 30 minutes
 
 async function logDebug(message) {
     const timestamp = new Date().toISOString().split('T')[1].slice(0, -1);

@@ -46,6 +46,7 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
                         <th>Description</th>
                         <th>Due Date</th>
                         <th>Status</th>
+                        <th>Score</th>
                         <th>Action</th>
                     </tr>
                 </thead>
@@ -61,8 +62,22 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
                         </div>
                     </td>
 	                <td><?= !empty($sub['due_date']) ? date("F j, Y", strtotime($sub['due_date'])) : 'No Deadline' ?></td>
-					<td>
+                    <td>
                         <span class="badge badge-pending"><?= ucfirst($sub['status']) ?></span>
+                    </td>
+                    <td>
+                        <?php if (!empty($sub['score'])) { ?>
+                            <span style="color:#F59E0B;" title="Score">
+                                <?php
+                                    $score = (int)$sub['score'];
+                                    for ($s = 1; $s <= 5; $s++) {
+                                        echo ($s <= $score) ? '<i class="fa fa-star"></i>' : '<i class="fa fa-star-o"></i>';
+                                    }
+                                ?>
+                            </span>
+                        <?php } else { ?>
+                            <span style="color: var(--text-gray); font-size: 12px;">Not rated</span>
+                        <?php } ?>
                     </td>
 					<td>
                         <!-- Using submit-subtask.php or maybe we should modernize that too? 

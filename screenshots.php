@@ -398,39 +398,7 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] == "
                 return div.innerHTML;
             }
 
-            // Auto-refresh DISABLED - page will only update on manual refresh
-            // This prevents new screenshots from popping up and breaking the layout
-            /*
-            function startAutoRefresh() {
-                if (refreshInterval) return;
-                refreshInterval = setInterval(fetchScreenshots, 5000);
-            }
 
-            function stopAutoRefresh() {
-                if (refreshInterval) {
-                    clearInterval(refreshInterval);
-                    refreshInterval = null;
-                }
-            }
-
-            // Start auto-refresh when page loads
-            startAutoRefresh();
-
-            // Stop auto-refresh when page is hidden, resume when visible
-            document.addEventListener('visibilitychange', function() {
-                if (document.hidden) {
-                    stopAutoRefresh();
-                } else {
-                    startAutoRefresh();
-                    fetchScreenshots(); // Refresh immediately when page becomes visible
-                }
-            });
-
-            // Clean up on page unload
-            window.addEventListener('beforeunload', function() {
-                stopAutoRefresh();
-            });
-            */
         })();
     </script>
 </body>

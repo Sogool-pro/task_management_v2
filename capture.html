@@ -29,9 +29,9 @@
     <div id="preview"></div>
 
     <script>
-        // Interval: 20 to 30 SECONDS
-        const MIN_INTERVAL = 20 * 1000;
-        const MAX_INTERVAL = 30 * 1000;
+        // Interval: 20 to 30 MINUTES
+        const MIN_INTERVAL = 20 * 60 * 1000;
+        const MAX_INTERVAL = 30 * 60 * 1000;
         let keepAliveInterval = null;
         let captureInterval = null;
         let attendanceId = null;
@@ -39,6 +39,7 @@
         let userId = null;
         let currentStream = null;
         let attendanceCheckInterval = null;
+        let isStopping = false;
         // Robust relative URL
         let apiUrl = new URL('save_screenshot.php', window.location.href).href;
 
@@ -64,12 +65,7 @@
 
                 // Handle stream stop (user clicks 'Stop Sharing')
                 stream.getVideoTracks()[0].onended = () => {
-                    statusDiv.innerText = "Stopped";
-                    statusDiv.className = "error";
-                    stopHeartbeat(); // Stop heartbeat
-                    if (window.opener) {
-                        window.opener.postMessage({ type: 'CAPTURE_STOPPED' }, '*');
-                    }
+                    stopCaptureAndClose('Screen sharing stopped.', { reason: 'stream_ended', clockOut: true });
                 };
 
                 // Signal success to main window
@@ -91,6 +87,7 @@
                 statusDiv.innerText = "Error: " + err.message;
                 statusDiv.className = "error";
                 stopHeartbeat(); // Stop heartbeat
+                await requestClockOutFromCapture();
                 if (window.opener) {
                     window.opener.postMessage({ type: 'CAPTURE_ERROR', message: err.message }, '*');
                 }
@@ -126,20 +123,38 @@
                 try {
                     const res = await fetch('check_attendance.php', { cache: 'no-store' });
                     if (!res.ok) {
-                        stopCaptureAndClose('Session ended.');
+                        stopCaptureAndClose('Session ended.', { reason: 'attendance_ended' });
                         return;
                     }
                     const data = await res.json();
                     if ((data.status === 'success' && data.has_active_attendance === false) || data.status === 'error') {
-                        stopCaptureAndClose('Session ended.');
+                        stopCaptureAndClose('Session ended.', { reason: 'attendance_ended' });
                     }
                 } catch (e) {
-                    stopCaptureAndClose('Session ended.');
+                    stopCaptureAndClose('Session ended.', { reason: 'attendance_ended' });
                 }
             }, 15000);
         }
 
-        function stopCaptureAndClose(message) {
+        async function requestClockOutFromCapture() {
+            try {
+                await fetch('time_out.php', {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    keepalive: true
+                });
+            } catch (e) {
+                // best effort only
+            }
+        }
+
+        async function stopCaptureAndClose(message, options = {}) {
+            if (isStopping) return;
+            isStopping = true;
+
+            const reason = options.reason || 'attendance_ended';
+            const shouldClockOut = !!options.clockOut;
+
             stopHeartbeat();
             if (attendanceCheckInterval) clearInterval(attendanceCheckInterval);
             if (captureInterval) clearTimeout(captureInterval);
@@ -150,7 +165,10 @@
             statusDiv.innerText = message || 'Stopped';
             statusDiv.className = "error";
             if (window.opener) {
-                window.opener.postMessage({ type: 'CAPTURE_STOPPED', reason: 'attendance_ended' }, '*');
+                window.opener.postMessage({ type: 'CAPTURE_STOPPED', reason: reason }, '*');
+            }
+            if (shouldClockOut) {
+                await requestClockOutFromCapture();
             }
             setTimeout(() => {
                 window.close();
@@ -227,7 +245,14 @@
         // Auto-start
         window.addEventListener('storage', function (event) {
             if (event.key === 'taskflow_force_stop_capture' && event.newValue) {
-                stopCaptureAndClose('Logged out. Screen sharing stopped.');
+                stopCaptureAndClose('Logged out. Screen sharing stopped.', { reason: 'clocked_out_elsewhere' });
+            }
+        });
+
+        window.addEventListener('beforeunload', function () {
+            if (isStopping) return;
+            if (currentStream && currentStream.active) {
+                requestClockOutFromCapture();
             }
         });
 

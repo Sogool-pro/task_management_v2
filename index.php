@@ -674,7 +674,7 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
                         }
                 ?>
                 <!-- Task Card -->
-                <div class="task-card" onclick="location.href='<?=$redirectUrl?>'">
+                <div class="task-card" onclick="navigateWithClockInGuard('<?=$redirectUrl?>')">
                     
                     <div style="margin-bottom: 12px; display: flex; justify-content: space-between; align-items: start;">
                         <h3 class="task-title" style="margin: 0;"><?= htmlspecialchars($task['title']) ?></h3>
@@ -916,6 +916,9 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
         btnOut.disabled = true;
         statusSpan.textContent = 'Clocking out...';
         statusSpan.style.color = ''; // Reset color
+
+        // Signal other tabs/windows (including capture.html) to stop immediately.
+        signalCaptureStop('manual_clock_out');
         
         // Close capture window
         if (captureWindow && !captureWindow.closed) {
@@ -958,6 +961,20 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
         statusSpan.style.color = isError ? '#EF4444' : '';
     }
 
+    function signalCaptureStop(reason) {
+        try {
+            localStorage.setItem('taskflow_force_stop_capture', JSON.stringify({
+                ts: Date.now(),
+                reason: reason || 'clock_out'
+            }));
+            setTimeout(function () {
+                localStorage.removeItem('taskflow_force_stop_capture');
+            }, 1000);
+        } catch (e) {
+            // no-op
+        }
+    }
+
     // On page load, check for active attendance
     if (btnIn && btnOut) {
         ajax('check_attendance.php', '', function (res) {
@@ -994,6 +1011,9 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
                     if (elOut) elOut.innerText = payload.time_out;
                 }
             } else {
+                if (hasActiveAttendance || attendanceId || (captureWindow && !captureWindow.closed)) {
+                    signalCaptureStop('attendance_inactive');
+                }
                 if (captureWindow && !captureWindow.closed) {
                     captureWindow.close();
                 }
@@ -1034,6 +1054,15 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
 
     function closeModal() {
         document.getElementById('pausedModal').style.display = 'none';
+    }
+
+    function navigateWithClockInGuard(targetHref) {
+        if (shouldAskClockInConfirmation(targetHref)) {
+            openNavClockInModal();
+            return false;
+        }
+        window.location.href = targetHref;
+        return true;
     }
 
     function shouldAskClockInConfirmation(targetHref) {
