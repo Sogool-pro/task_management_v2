@@ -2,6 +2,7 @@
 session_start();
 date_default_timezone_set('Asia/Manila');
 include "../DB_connection.php";
+require_once "../inc/tenant.php";
 
 if (isset($_POST['new_password']) && isset($_POST['confirm_password']) && isset($_POST['token'])) {
     
@@ -31,20 +32,31 @@ if (isset($_POST['new_password']) && isset($_POST['confirm_password']) && isset(
         if ($stmt->rowCount() > 0) {
             $reset = $stmt->fetch();
             $email = $reset['email'];
+            $reset_org_id = isset($reset['organization_id']) ? (int)$reset['organization_id'] : 0;
 
             // Hash new password
             $hashed_password = password_hash($new_password, PASSWORD_DEFAULT);
 
             // Update User Password
             $sql = "UPDATE users SET password=?, must_change_password=FALSE WHERE username=?";
+            $params = [$hashed_password, $email];
+            if (tenant_column_exists($pdo, 'users', 'organization_id') && $reset_org_id > 0) {
+                $sql .= " AND organization_id=?";
+                $params[] = $reset_org_id;
+            }
             $stmt = $pdo->prepare($sql);
-            $res = $stmt->execute([$hashed_password, $email]);
+            $res = $stmt->execute($params);
 
             if ($res) {
                 // Delete Token
                 $sql = "DELETE FROM password_resets WHERE email=?";
+                $params = [$email];
+                if (tenant_column_exists($pdo, 'password_resets', 'organization_id') && $reset_org_id > 0) {
+                    $sql .= " AND organization_id=?";
+                    $params[] = $reset_org_id;
+                }
                 $stmt = $pdo->prepare($sql);
-                $stmt->execute([$email]);
+                $stmt->execute($params);
 
                 header("Location: ../login.php?success=Password has been reset successfully. Please login.");
                 exit();

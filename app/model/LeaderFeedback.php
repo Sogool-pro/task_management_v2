@@ -1,5 +1,13 @@
 <?php
 
+require_once __DIR__ . '/../../inc/tenant.php';
+
+function leader_feedback_append_scope($pdo, $sql, $params, $table = 'leader_feedback', $alias = '', $joinWord = 'AND')
+{
+    $scope = tenant_get_scope($pdo, $table, $alias, $joinWord);
+    return [$sql . $scope['sql'], array_merge($params, $scope['params'])];
+}
+
 function smooth_peer_rating($peer_raw, $n, $prior_mean = 3.5, $prior_weight = 3)
 {
     $n = (int)$n;
@@ -36,10 +44,11 @@ function get_member_leader_feedback($pdo, $task_id, $leader_id, $member_id)
 
     $sql = "SELECT rating, comment, created_at, updated_at
             FROM leader_feedback
-            WHERE task_id = ? AND leader_id = ? AND member_id = ?
-            LIMIT 1";
+            WHERE task_id = ? AND leader_id = ? AND member_id = ?";
+    [$sql, $params] = leader_feedback_append_scope($pdo, $sql, [(int)$task_id, (int)$leader_id, (int)$member_id]);
+    $sql .= " LIMIT 1";
     $stmt = $pdo->prepare($sql);
-    $stmt->execute([(int)$task_id, (int)$leader_id, (int)$member_id]);
+    $stmt->execute($params);
     $row = $stmt->fetch(PDO::FETCH_ASSOC);
     return $row ?: null;
 }
@@ -53,8 +62,9 @@ function get_leader_peer_feedback_stats($pdo, $leader_id)
     $sql = "SELECT COUNT(*) AS count, AVG(rating) AS avg
             FROM leader_feedback
             WHERE leader_id = ?";
+    [$sql, $params] = leader_feedback_append_scope($pdo, $sql, [(int)$leader_id]);
     $stmt = $pdo->prepare($sql);
-    $stmt->execute([(int)$leader_id]);
+    $stmt->execute($params);
     $res = $stmt->fetch(PDO::FETCH_ASSOC);
 
     $count = (int)($res['count'] ?? 0);
@@ -83,10 +93,14 @@ function get_leader_feedback_for_task($pdo, $task_id, $leader_id)
                    u.profile_image AS member_profile_image
             FROM leader_feedback lf
             JOIN users u ON u.id = lf.member_id
-            WHERE lf.task_id = ? AND lf.leader_id = ?
+            WHERE lf.task_id = ? AND lf.leader_id = ?";
+    $params = [(int)$task_id, (int)$leader_id];
+    $scope = tenant_get_scope($pdo, 'leader_feedback', 'lf');
+    $sql .= $scope['sql'] . "
             ORDER BY (lf.updated_at IS NULL) ASC, lf.updated_at DESC, lf.created_at DESC";
+    $params = array_merge($params, $scope['params']);
     $stmt = $pdo->prepare($sql);
-    $stmt->execute([(int)$task_id, (int)$leader_id]);
+    $stmt->execute($params);
     return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
 }
 
@@ -102,10 +116,14 @@ function can_member_rate_leader($pdo, $task_id, $member_id)
               ON leader.task_id = t.id
              AND leader.role = 'leader'
             WHERE t.id = ?
-              AND t.status = 'completed'
+              AND t.status = 'completed'";
+    $params = [(int)$member_id, (int)$task_id];
+    $scope = tenant_get_scope($pdo, 'tasks', 't');
+    $sql .= $scope['sql'] . "
             LIMIT 1";
+    $params = array_merge($params, $scope['params']);
     $stmt = $pdo->prepare($sql);
-    $stmt->execute([(int)$member_id, (int)$task_id]);
+    $stmt->execute($params);
     $row = $stmt->fetch(PDO::FETCH_ASSOC);
     return $row ?: null;
 }
@@ -116,14 +134,25 @@ function upsert_leader_feedback($pdo, $task_id, $leader_id, $member_id, $rating,
         return false;
     }
 
-    $sql = "INSERT INTO leader_feedback (task_id, leader_id, member_id, rating, comment, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, NOW(), NOW())
-            ON DUPLICATE KEY UPDATE
-                rating = VALUES(rating),
-                comment = VALUES(comment),
-                updated_at = NOW()";
+    if (tenant_column_exists($pdo, 'leader_feedback', 'organization_id') && tenant_get_current_org_id()) {
+        $sql = "INSERT INTO leader_feedback (task_id, leader_id, member_id, rating, comment, created_at, updated_at, organization_id)
+                VALUES (?, ?, ?, ?, ?, NOW(), NOW(), ?)
+                ON DUPLICATE KEY UPDATE
+                    rating = VALUES(rating),
+                    comment = VALUES(comment),
+                    updated_at = NOW()";
+        $params = [(int)$task_id, (int)$leader_id, (int)$member_id, (int)$rating, $comment, tenant_get_current_org_id()];
+    } else {
+        $sql = "INSERT INTO leader_feedback (task_id, leader_id, member_id, rating, comment, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, NOW(), NOW())
+                ON DUPLICATE KEY UPDATE
+                    rating = VALUES(rating),
+                    comment = VALUES(comment),
+                    updated_at = NOW()";
+        $params = [(int)$task_id, (int)$leader_id, (int)$member_id, (int)$rating, $comment];
+    }
     $stmt = $pdo->prepare($sql);
-    return $stmt->execute([(int)$task_id, (int)$leader_id, (int)$member_id, (int)$rating, $comment]);
+    return $stmt->execute($params);
 }
 
 function clear_leader_feedback_for_task($pdo, $task_id)
@@ -132,6 +161,8 @@ function clear_leader_feedback_for_task($pdo, $task_id)
         return false;
     }
 
-    $stmt = $pdo->prepare("DELETE FROM leader_feedback WHERE task_id = ?");
-    return $stmt->execute([(int)$task_id]);
+    $sql = "DELETE FROM leader_feedback WHERE task_id = ?";
+    [$sql, $params] = leader_feedback_append_scope($pdo, $sql, [(int)$task_id]);
+    $stmt = $pdo->prepare($sql);
+    return $stmt->execute($params);
 }

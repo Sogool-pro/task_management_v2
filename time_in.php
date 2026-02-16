@@ -4,6 +4,7 @@ date_default_timezone_set('Asia/Manila');
 header('Content-Type: application/json');
 
 require 'DB_connection.php';
+require_once 'inc/tenant.php';
 
 if (!isset($_SESSION['id']) || $_SESSION['role'] !== 'employee') {
     echo json_encode(['status' => 'error', 'message' => 'Unauthorized']);
@@ -18,8 +19,12 @@ $now     = date('H:i:s');
 // Only block if there is a session that is NOT clocked out
 $sql = "SELECT id FROM attendance
         WHERE user_id = ? AND att_date = ? AND time_out IS NULL";
+$params = [$user_id, $today];
+$scope = tenant_get_scope($pdo, 'attendance');
+$sql .= $scope['sql'];
+$params = array_merge($params, $scope['params']);
 $stmt = $pdo->prepare($sql);
-$stmt->execute([$user_id, $today]);
+$stmt->execute($params);
 $active_att = $stmt->fetch(PDO::FETCH_ASSOC);
 
 /* ALREADY TIMED IN */
@@ -32,7 +37,13 @@ if ($active_att) {
 // If no active session, insert new one (even if others exist for today)
 $sql = "INSERT INTO attendance (user_id, att_date, time_in)
         VALUES (?, ?, ?)";
-$pdo->prepare($sql)->execute([$user_id, $today, $now]);
+if (tenant_column_exists($pdo, 'attendance', 'organization_id') && tenant_get_current_org_id()) {
+    $sql = "INSERT INTO attendance (user_id, att_date, time_in, organization_id)
+            VALUES (?, ?, ?, ?)";
+    $pdo->prepare($sql)->execute([$user_id, $today, $now, tenant_get_current_org_id()]);
+} else {
+    $pdo->prepare($sql)->execute([$user_id, $today, $now]);
+}
 
 // Get the inserted attendance ID
 $new_attendance_id = $pdo->lastInsertId();

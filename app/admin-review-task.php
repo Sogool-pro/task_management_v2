@@ -4,6 +4,7 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] == "
     
     if (isset($_POST['task_id']) && isset($_POST['action'])) {
         include "../DB_connection.php";
+        require_once "../inc/tenant.php";
         include "model/Notification.php";
         include "model/Task.php";
         include "model/LeaderFeedback.php";
@@ -51,14 +52,22 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] == "
             }
 
             if ($leader_id > 0 && ($leader_rating < 1 || $leader_rating > 5)) {
-                $em = "Leader rating must be between 1 and 5.";
-                header("Location: ../tasks.php?error=$em&open_task=$task_id");
-                exit();
+                // If leader rating is omitted in UI, default to task rating so admin review can proceed.
+                $leader_rating = $rating;
             }
 
             $sql = "UPDATE tasks SET status = 'completed', rating = ?, review_comment = ?, reviewed_by = ?, reviewed_at = NOW() WHERE id = ?";
+            $params = [$rating, $feedback, $_SESSION['id'], $task_id];
+            $scope = tenant_get_scope($pdo, 'tasks');
+            $sql .= $scope['sql'];
+            $params = array_merge($params, $scope['params']);
             $stmt = $pdo->prepare($sql);
-            $stmt->execute([$rating, $feedback, $_SESSION['id'], $task_id]);
+            $stmt->execute($params);
+            if ($stmt->rowCount() <= 0) {
+                $em = "Task review failed: task not found in your workspace.";
+                header("Location: ../tasks.php?error=$em&open_task=$task_id");
+                exit();
+            }
 
             if ($leader_id > 0 && $leader_rating > 0) {
                 update_task_assignee_ratings($pdo, $task_id, [$leader_id => $leader_rating], $_SESSION['id']);
@@ -78,8 +87,17 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] == "
 
             // Set status to 'in_progress' for revision
             $sql = "UPDATE tasks SET status = 'in_progress', review_comment = ?, reviewed_by = ?, reviewed_at = NOW() WHERE id = ?";
+            $params = [$feedback, $_SESSION['id'], $task_id];
+            $scope = tenant_get_scope($pdo, 'tasks');
+            $sql .= $scope['sql'];
+            $params = array_merge($params, $scope['params']);
             $stmt = $pdo->prepare($sql);
-            $stmt->execute([$feedback, $_SESSION['id'], $task_id]);
+            $stmt->execute($params);
+            if ($stmt->rowCount() <= 0) {
+                $em = "Revision request failed: task not found in your workspace.";
+                header("Location: ../tasks.php?error=$em&open_task=$task_id");
+                exit();
+            }
 
             // Clear ratings tied to previous acceptance cycle.
             clear_task_assignee_ratings($pdo, $task_id);

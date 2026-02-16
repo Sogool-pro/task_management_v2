@@ -7,6 +7,7 @@ if ($_SESSION['role'] !== 'admin') {
 }
 
 include "DB_connection.php";
+require_once "inc/tenant.php";
 
 $task_id = $_POST['task_id'];
 $comment = $_POST['comment'] ?? null;
@@ -25,8 +26,12 @@ if (isset($_POST['approve'])) {
             WHERE id = ?";
 }
 
+$params = [$comment, $task_id];
+$scope = tenant_get_scope($pdo, 'tasks');
+$sql .= $scope['sql'];
+$params = array_merge($params, $scope['params']);
 $stmt = $pdo->prepare($sql);
-$stmt->execute([$comment, $task_id]);
+$stmt->execute($params);
 
 header("Location: tasks.php?reviewed=1");
 exit();

@@ -33,7 +33,7 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
     <!-- Main Content -->
     <div class="dash-main">
         
-        <div class="dash-card" style="padding: 0; overflow: hidden; max-width: 900px; margin: 0;">
+        <div class="dash-card" style="padding: 0; overflow: hidden; margin: 0;">
             <div class="profile-banner"></div>
             
             <div class="profile-header-section">

@@ -106,4 +106,50 @@ function send_password_reset_email($to_email, $full_name, $token) {
         return false;
     }
 }
+
+function send_workspace_invite_email($to_email, $full_name, $workspace_name, $token, $inviter_name, $role = 'employee') {
+    if (MAIL_USERNAME === '' || MAIL_PASSWORD === '') {
+        error_log('Mail not configured: set MAIL_USERNAME and MAIL_PASSWORD environment variables.');
+        return false;
+    }
+
+    $mail = new PHPMailer(true);
+
+    try {
+        $mail->isSMTP();
+        $mail->Host       = MAIL_HOST;
+        $mail->SMTPAuth   = true;
+        $mail->Username   = MAIL_USERNAME;
+        $mail->Password   = MAIL_PASSWORD;
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+        $mail->Port       = MAIL_PORT;
+
+        $mail->setFrom(MAIL_FROM_ADDRESS, MAIL_FROM_NAME);
+        $mail->addAddress($to_email, $full_name);
+
+        $mail->isHTML(true);
+        $join_url = APP_URL . "/join-workspace.php?token=$token";
+        $safe_role = ($role === 'admin') ? 'Admin' : 'Employee';
+
+        $mail->Subject = "You're invited to join {$workspace_name} on TaskFlow";
+        $mail->Body    = "
+            <h2>Workspace Invitation</h2>
+            <p>Hello {$full_name},</p>
+            <p><strong>{$inviter_name}</strong> invited you to join <strong>{$workspace_name}</strong> in TaskFlow.</p>
+            <p>Your role: <strong>{$safe_role}</strong></p>
+            <p>Click this link to set your password and activate your account:</p>
+            <p><a href='{$join_url}'>{$join_url}</a></p>
+            <p>This invitation link expires in 7 days.</p>
+            <br>
+            <p>Regards,<br>The Team</p>
+        ";
+        $mail->AltBody = "You were invited to join {$workspace_name}. Open this link: {$join_url}";
+
+        $mail->send();
+        return true;
+    } catch (Exception $e) {
+        error_log("Workspace invite email failed: {$mail->ErrorInfo}");
+        return false;
+    }
+}
 ?>

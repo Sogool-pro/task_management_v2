@@ -4,6 +4,7 @@ if ((isset($_SESSION['role']) && $_SESSION['role'] == "employee") || (isset($_SE
     
     if (isset($_POST['task_id'])) {
         include "../DB_connection.php";
+        require_once "../inc/tenant.php";
         include "model/Notification.php";
         include "model/Task.php";
 
@@ -38,17 +39,30 @@ if ((isset($_SESSION['role']) && $_SESSION['role'] == "employee") || (isset($_SE
         // Update task status to 'completed' and save submission info
         if ($file_path) {
             $sql = "UPDATE tasks SET status = 'completed', submission_note = ?, submission_file = ?, reviewed_at = NOW() WHERE id = ?";
+            $params = [$note, $file_path, $task_id];
+            $scope = tenant_get_scope($pdo, 'tasks');
+            $sql .= $scope['sql'];
+            $params = array_merge($params, $scope['params']);
             $stmt = $pdo->prepare($sql);
-            $stmt->execute([$note, $file_path, $task_id]);
+            $stmt->execute($params);
         } else {
             $sql = "UPDATE tasks SET status = 'completed', submission_note = ?, reviewed_at = NOW() WHERE id = ?";
+            $params = [$note, $task_id];
+            $scope = tenant_get_scope($pdo, 'tasks');
+            $sql .= $scope['sql'];
+            $params = array_merge($params, $scope['params']);
             $stmt = $pdo->prepare($sql);
-            $stmt->execute([$note, $task_id]);
+            $stmt->execute($params);
         }
 
         // Notify Admin(s)
-        $stmt2 = $pdo->prepare("SELECT id FROM users WHERE role = 'admin'");
-        $stmt2->execute();
+        $adminSql = "SELECT id FROM users WHERE role = 'admin'";
+        $adminParams = [];
+        $scope = tenant_get_scope($pdo, 'users');
+        $adminSql .= $scope['sql'];
+        $adminParams = array_merge($adminParams, $scope['params']);
+        $stmt2 = $pdo->prepare($adminSql);
+        $stmt2->execute($adminParams);
         $admins = $stmt2->fetchAll(PDO::FETCH_ASSOC);
 
         $task = get_task_by_id($pdo, $task_id);

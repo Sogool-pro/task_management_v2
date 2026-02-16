@@ -15,10 +15,20 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
         $num_task = count_tasks($pdo);
         $completed = count_completed_tasks($pdo);
         $num_users = count_users($pdo); // Employees
-        $avg_rating = "4.3"; // Mock data as per design
+        $avgSql = "SELECT AVG(rating) FROM tasks WHERE status = 'completed' AND rating IS NOT NULL AND rating > 0";
+        $scope = tenant_get_scope($pdo, 'tasks');
+        $avgSql .= $scope['sql'];
+        $avgStmt = $pdo->prepare($avgSql);
+        $avgStmt->execute($scope['params']);
+        $avgVal = $avgStmt->fetchColumn();
+        $avg_rating = $avgVal ? number_format((float)$avgVal, 1) : "0.0";
         $top_users = get_top_rated_users($pdo, 5);
         $top_groups = get_top_rated_groups($pdo, 5);
-        $collab_stmt = $pdo->query("SELECT AVG(score) FROM subtasks WHERE score IS NOT NULL AND score > 0");
+        $collabSql = "SELECT AVG(score) FROM subtasks WHERE score IS NOT NULL AND score > 0";
+        $scope = tenant_get_scope($pdo, 'subtasks');
+        $collabSql .= $scope['sql'];
+        $collab_stmt = $pdo->prepare($collabSql);
+        $collab_stmt->execute($scope['params']);
         $collab_avg = $collab_stmt->fetchColumn();
         $collaborative_rate = $collab_avg ? number_format($collab_avg, 1) : "0.0";
     } else {
@@ -35,17 +45,24 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
 
     // 2. Recent Tasks (List 2-3 items)
     if ($_SESSION['role'] == "admin") {
-         $sql_recent = "SELECT * FROM tasks ORDER BY id DESC LIMIT 2";
-         $stmt_recent = $pdo->query($sql_recent);
+         $sql_recent = "SELECT * FROM tasks WHERE 1=1";
+         $scope = tenant_get_scope($pdo, 'tasks');
+         $sql_recent .= $scope['sql'] . " ORDER BY id DESC LIMIT 2";
+         $stmt_recent = $pdo->prepare($sql_recent);
+         $stmt_recent->execute($scope['params']);
          $recent_tasks = $stmt_recent->fetchAll(PDO::FETCH_ASSOC);
     } else {
          $user_id = $_SESSION['id'];
          $sql_recent = "SELECT DISTINCT t.* FROM tasks t
                         JOIN task_assignees ta ON t.id = ta.task_id
-                        WHERE ta.user_id=?
+                        WHERE ta.user_id=?";
+         $params_recent = [$user_id];
+         $scope = tenant_get_scope($pdo, 'tasks', 't');
+         $sql_recent .= $scope['sql'] . "
                         ORDER BY t.id DESC LIMIT 2";
+         $params_recent = array_merge($params_recent, $scope['params']);
          $stmt_recent = $pdo->prepare($sql_recent);
-         $stmt_recent->execute([$user_id]);
+         $stmt_recent->execute($params_recent);
          $recent_tasks = $stmt_recent->fetchAll(PDO::FETCH_ASSOC);
     }
 ?>
@@ -726,12 +743,9 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
                     <!-- Footer -->
                     <div class="task-footer">
                         <div>Due: <?= empty($task['due_date']) ? 'No Date' : date("M d", strtotime($task['due_date'])) ?></div>
-                        <?php if ($leader) {
-                            $lStats = get_user_rating_stats($pdo, $leader['user_id']);
-                            if($lStats['avg'] > 0) {
-                        ?>
-                        <div style="color: #F59E0B; font-weight: 600;"><i class="fa fa-star"></i> <?= $lStats['avg'] ?>/5</div>
-                        <?php } } ?>
+                        <?php if ($task['status'] == 'completed' && isset($task['rating']) && (float)$task['rating'] > 0) { ?>
+                        <div style="color: #F59E0B; font-weight: 600;"><i class="fa fa-star"></i> <?= number_format((float)$task['rating'], 1) ?>/5</div>
+                        <?php } ?>
                     </div>
                 </div>
                 <?php 

@@ -62,7 +62,7 @@
                     <img src="img/logo2.png" alt="Logo 2" class="auth-logo-img">
                 </div>
                 <h3 class="auth-title">Create Account</h3>
-                <p class="auth-subtitle">Join the Task Management System</p>
+                <p class="auth-subtitle">Create a new workspace (owner signup)</p>
 
                 <?php if (isset($_GET['error'])) { ?>
                     <div class="alert alert-danger" role="alert">
@@ -71,10 +71,15 @@
                 <?php } ?>
 
                 <div class="auth-info-box">
-                    Enter your details to create an <strong>Employee</strong> account. A secure password will be emailed to you.
+                    This form is for workspace owners/admins. Employees should join using an invite link from their admin.
                 </div>
 
                 <form method="POST" action="app/signup.php">
+                    <div class="form-group">
+                        <label class="form-label">Workspace Name</label>
+                        <input type="text" class="form-control" name="organization_name" placeholder="Acme Team" required>
+                    </div>
+
                     <div class="form-group">
                         <label class="form-label">Full Name</label>
                         <input type="text" class="form-control" name="full_name" placeholder="John Doe" required>

@@ -380,12 +380,9 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] === 
                 <!-- Footer -->
                 <div class="task-footer">
                     <div>Due: <?= empty($task['due_date']) ? 'No Date' : date("M j", strtotime($task['due_date'])) ?></div>
-                    <?php if ($leader) { 
-                        $lStats = get_user_rating_stats($pdo, $leader['user_id']);
-                        if($lStats['avg'] > 0) {
-                    ?>
-                    <div style="color: #F59E0B; font-weight: 600;"><i class="fa fa-star"></i> <?= $lStats['avg'] ?>/5</div>
-                    <?php } } ?>
+                    <?php if ($task['status'] == 'completed' && isset($task['rating']) && (float)$task['rating'] > 0) { ?>
+                    <div style="color: #F59E0B; font-weight: 600;"><i class="fa fa-star"></i> <?= number_format((float)$task['rating'], 1) ?>/5</div>
+                    <?php } ?>
                 </div>
             </div>
             <?php } 
@@ -917,14 +914,6 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] === 
                 e.preventDefault();
                 alert("Please provide a task rating.");
                 return;
-            }
-
-            if ($("#leaderRatingBlock").is(":visible")) {
-                const leaderRating = parseInt($("#leaderRatingValue").val(), 10) || 0;
-                if (leaderRating < 1 || leaderRating > 5) {
-                    e.preventDefault();
-                    alert("Please provide a leader rating.");
-                }
             }
         });
     </script>

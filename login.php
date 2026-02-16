@@ -102,7 +102,8 @@
                 </form>
 
                 <div class="auth-footer">
-                    Don't have an account? <a href="signup.php" class="auth-link">Sign Up</a>
+                    Need a workspace? <a href="signup.php" class="auth-link">Create one</a><br>
+                    Got an invite link? Open it and set your password to join your team.
                 </div>
             </div>
       </div>

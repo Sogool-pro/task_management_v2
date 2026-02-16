@@ -1,0 +1,159 @@
+<?php
+include "DB_connection.php";
+require_once "inc/tenant.php";
+
+$token = trim((string)($_GET['token'] ?? ''));
+$invite = null;
+$inviteError = null;
+
+if ($token === '') {
+    $inviteError = "Invitation token is missing.";
+} elseif (!tenant_table_exists($pdo, 'workspace_invites')) {
+    $inviteError = "Invitation system is not available yet.";
+} else {
+    $stmt = $pdo->prepare(
+        "SELECT wi.id, wi.email, wi.full_name, wi.role, wi.status, wi.expires_at,
+                o.name AS organization_name, o.status AS organization_status
+         FROM workspace_invites wi
+         JOIN organizations o ON o.id = wi.organization_id
+         WHERE wi.token = ?
+         LIMIT 1"
+    );
+    $stmt->execute([$token]);
+    $invite = $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+
+    if (!$invite) {
+        $inviteError = "Invalid invitation link.";
+    } else {
+        $status = strtolower((string)$invite['status']);
+        $orgStatus = strtolower((string)($invite['organization_status'] ?? 'active'));
+        $expiresAt = strtotime((string)$invite['expires_at']);
+
+        if ($status !== 'pending') {
+            $inviteError = "This invitation is no longer active.";
+        } elseif ($expiresAt !== false && $expiresAt <= time()) {
+            $inviteError = "This invitation has expired. Ask your admin to send a new one.";
+        } elseif (in_array($orgStatus, ['suspended', 'canceled'], true)) {
+            $inviteError = "This workspace is currently unavailable.";
+        }
+    }
+}
+?>
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Join Workspace | Task Management System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="css/auth.css">
+</head>
+<body class="auth-body">
+    <div class="auth-container">
+        <!-- Left Side: Branding -->
+        <div class="auth-left">
+            <div class="auth-left-content">
+                <h2>Manage tasks, track time, and boost productivity effortlessly.</h2>
+                <p>Empower your team with real-time collaboration, smart task management, and performance insights.</p>
+                
+                <div class="auth-feature-list">
+                    <div class="auth-feature-item">
+                        <div class="auth-feature-icon">
+                            <i class="fa fa-check-circle-o"></i>
+                        </div>
+                        <div class="auth-feature-text">
+                            <h4>Task Management</h4>
+                            <p>Create, assign, and track tasks with subtasks and deadlines</p>
+                        </div>
+                    </div>
+                    
+                    <div class="auth-feature-item">
+                        <div class="auth-feature-icon">
+                            <i class="fa fa-clock-o"></i>
+                        </div>
+                        <div class="auth-feature-text">
+                            <h4>Time Tracking</h4>
+                            <p>Monitor work hours with automatic screen capture for accountability</p>
+                        </div>
+                    </div>
+                    
+                    <div class="auth-feature-item">
+                        <div class="auth-feature-icon">
+                            <i class="fa fa-line-chart"></i>
+                        </div>
+                        <div class="auth-feature-text">
+                            <h4>Performance Analytics</h4>
+                            <p>Track team performance with ratings and detailed reports</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Side: Form -->
+        <div class="auth-right">
+            <div class="auth-logos">
+                <img src="img/logo.png" alt="Logo 1" class="auth-logo-img">
+                <img src="img/logo2.png" alt="Logo 2" class="auth-logo-img">
+            </div>
+            <h3 class="auth-title">Join Workspace</h3>
+            <p class="auth-subtitle">Create your account and join your team</p>
+
+            <?php if (isset($_GET['error'])) { ?>
+                <div class="alert alert-danger"><?= htmlspecialchars($_GET['error']) ?></div>
+            <?php } ?>
+
+            <?php if ($inviteError !== null) { ?>
+                <div class="alert alert-danger"><?= htmlspecialchars($inviteError) ?></div>
+                <div class="auth-footer">
+                    Back to <a href="login.php" class="auth-link">Login</a>
+                </div>
+            <?php } else { ?>
+                <div class="auth-info-box">
+                    You are invited to join <strong><?= htmlspecialchars((string)$invite['organization_name']) ?></strong>
+                    as <strong><?= htmlspecialchars((string)$invite['role']) ?></strong>.
+                </div>
+
+                <form method="POST" action="app/accept-invite.php">
+                    <input type="hidden" name="token" value="<?= htmlspecialchars($token) ?>">
+
+                    <div class="form-group">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-control" value="<?= htmlspecialchars((string)$invite['email']) ?>" readonly>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Full Name</label>
+                        <input
+                            type="text"
+                            class="form-control"
+                            name="full_name"
+                            value="<?= htmlspecialchars((string)($invite['full_name'] ?: '')) ?>"
+                            required
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Password</label>
+                        <input type="password" class="form-control" name="password" placeholder="At least 8 characters" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Confirm Password</label>
+                        <input type="password" class="form-control" name="confirm_password" placeholder="Repeat password" required>
+                    </div>
+
+                    <button type="submit" class="btn-primary">Join Workspace</button>
+                </form>
+
+                <div class="auth-footer">
+                    Already have an account? <a href="login.php" class="auth-link">Login</a>
+                </div>
+            <?php } ?>
+        </div>
+    </div>
+</body>
+</html>

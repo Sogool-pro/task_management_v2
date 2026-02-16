@@ -12,6 +12,7 @@ if (!isset($_POST['id'])) {
 }
 
 require_once "../DB_connection.php";
+require_once "../inc/tenant.php";
 require_once "model/Task.php";
 require_once "model/Notification.php";
 require_once "model/user.php";
@@ -74,8 +75,13 @@ update_task_submission($pdo, ["uploads/$filename", $id]);
 $task = get_task_by_id($pdo, $id);
 $user = get_user_by_id($pdo, $_SESSION['id']);
 
-$stmt = $pdo->prepare("SELECT id FROM users WHERE role='admin'");
-$stmt->execute();
+$adminSql = "SELECT id FROM users WHERE role='admin'";
+$adminParams = [];
+$scope = tenant_get_scope($pdo, 'users');
+$adminSql .= $scope['sql'];
+$adminParams = array_merge($adminParams, $scope['params']);
+$stmt = $pdo->prepare($adminSql);
+$stmt->execute($adminParams);
 
 foreach ($stmt->fetchAll() as $admin) {
     insert_notification($pdo, [

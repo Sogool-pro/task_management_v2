@@ -29,7 +29,7 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
         
         <form action="app/update-profile.php" method="POST" enctype="multipart/form-data">
             
-            <div class="dash-card" style="padding: 0; overflow: visible; max-width: 900px; margin: 0;">
+            <div class="dash-card" style="padding: 0; overflow: visible; margin: 0;">
                 <div class="profile-banner"></div>
                 
                 <div class="profile-header-section">
