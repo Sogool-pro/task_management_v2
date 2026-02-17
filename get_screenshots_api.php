@@ -8,6 +8,7 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != "admin") {
 }
 
 include "DB_connection.php";
+require_once "inc/tenant.php";
 include "app/model/user.php";
 
 // Get filter parameters
@@ -21,6 +22,10 @@ $sql = "SELECT s.*, u.full_name, u.username, a.time_in, a.time_out
         LEFT JOIN attendance a ON s.attendance_id = a.id 
         WHERE 1=1";
 $params = [];
+
+$scope = tenant_get_scope($pdo, 'screenshots', 's');
+$sql .= $scope['sql'];
+$params = array_merge($params, $scope['params']);
 
 if ($filter_user_id) {
     $sql .= " AND s.user_id = ?";

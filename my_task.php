@@ -344,7 +344,7 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
         <?php } ?>
 
         <div class="tasks-grid">
-            <?php if ($tasks != 0) { 
+            <?php if (!empty($tasks)) { 
                 foreach ($tasks as $task) { 
                     $isLeader = is_leader($pdo, $task['id'], $_SESSION['id']);
                     $subtasks = get_subtasks_by_task($pdo, $task['id']);
@@ -437,12 +437,9 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
                 <!-- Footer -->
                 <div class="task-footer">
                     <div>Due: <?= empty($task['due_date']) ? 'No Date' : date("M d", strtotime($task['due_date'])) ?></div>
-                    <?php if ($leader) {
-                        $lStats = get_user_rating_stats($pdo, $leader['user_id']);
-                        if($lStats['avg'] > 0) {
-                    ?>
-                    <div style="color: #F59E0B; font-weight: 600;"><i class="fa fa-star"></i> <?= $lStats['avg'] ?>/5</div>
-                    <?php } } ?>
+                    <?php if ($task['status'] == 'completed' && isset($task['rating']) && (float)$task['rating'] > 0) { ?>
+                    <div style="color: #F59E0B; font-weight: 600;"><i class="fa fa-star"></i> <?= number_format((float)$task['rating'], 1) ?>/5</div>
+                    <?php } ?>
                 </div>
             </div>
 
@@ -458,7 +455,7 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
     </div>
 
     <!-- MODALS GENERATED OUTSIDE GRID (Second Loop) -->
-    <?php if ($tasks != 0) { 
+    <?php if (!empty($tasks)) { 
         foreach ($tasks as $task) { 
             // Re-populate variables needed for Modal
             $isLeader = is_leader($pdo, $task['id'], $_SESSION['id']);

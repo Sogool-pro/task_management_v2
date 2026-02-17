@@ -2,6 +2,7 @@
 session_start();
 date_default_timezone_set('Asia/Manila');
 include "../DB_connection.php";
+require_once "../inc/tenant.php";
 include "send_email.php";
 
 if (isset($_POST['email'])) {
@@ -33,9 +34,15 @@ if (isset($_POST['email'])) {
             $expires_at = date('Y-m-d H:i:s', strtotime('+1 hour'));
 
             // Insert request into DB
-            $sql = "INSERT INTO password_resets (email, token, expires_at) VALUES (?,?,?)";
-            $stmt = $pdo->prepare($sql);
-            $res = $stmt->execute([$email, $token, $expires_at]);
+            if (tenant_column_exists($pdo, 'password_resets', 'organization_id') && !empty($user['organization_id'])) {
+                $sql = "INSERT INTO password_resets (email, token, expires_at, organization_id) VALUES (?,?,?,?)";
+                $stmt = $pdo->prepare($sql);
+                $res = $stmt->execute([$email, $token, $expires_at, (int)$user['organization_id']]);
+            } else {
+                $sql = "INSERT INTO password_resets (email, token, expires_at) VALUES (?,?,?)";
+                $stmt = $pdo->prepare($sql);
+                $res = $stmt->execute([$email, $token, $expires_at]);
+            }
 
             if ($res) {
                 // Send Email

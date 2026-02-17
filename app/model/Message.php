@@ -1,32 +1,50 @@
-<?php 
-function getChats($sender_id, $receiver_id, $conn){
-    $sql = "SELECT * FROM chats
-            WHERE (sender_id = ? AND receiver_id = ?)
-            OR (receiver_id = ? AND sender_id = ?)
-            ORDER BY chat_id ASC";
-            
-    $stmt = $conn->prepare($sql);
-    $stmt->execute([$sender_id, $receiver_id, $sender_id, $receiver_id]);
+<?php
 
-    if($stmt->rowCount() > 0){
-        $chats = $stmt->fetchAll();
-        return $chats;
-    }else{
-        $chats = [];
-        return $chats;
-    }
+require_once __DIR__ . '/../../inc/tenant.php';
+
+function message_scope($pdo, $sql, $params, $joinWord = 'AND', $alias = '')
+{
+    $scope = tenant_get_scope($pdo, 'chats', $alias, $joinWord);
+    return [$sql . $scope['sql'], array_merge($params, $scope['params'])];
 }
 
-function insertChat($sender_id, $receiver_id, $message, $conn){
-    $sql = "INSERT INTO chats (sender_id, receiver_id, message)
-            VALUES (?, ?, ?)";
+function getChats($sender_id, $receiver_id, $conn)
+{
+    $sql = "SELECT * FROM chats
+            WHERE ((sender_id = ? AND receiver_id = ?)
+               OR (receiver_id = ? AND sender_id = ?))";
+    [$sql, $params] = message_scope($conn, $sql, [$sender_id, $receiver_id, $sender_id, $receiver_id], 'AND');
+    $sql .= " ORDER BY chat_id ASC";
+
     $stmt = $conn->prepare($sql);
-    $res = $stmt->execute([$sender_id, $receiver_id, $message]);
+    $stmt->execute($params);
+
+    if ($stmt->rowCount() > 0) {
+        return $stmt->fetchAll();
+    }
+    return [];
+}
+
+function insertChat($sender_id, $receiver_id, $message, $conn)
+{
+    $orgId = tenant_get_current_org_id();
+    if (tenant_column_exists($conn, 'chats', 'organization_id') && $orgId) {
+        $sql = "INSERT INTO chats (sender_id, receiver_id, message, organization_id)
+                VALUES (?, ?, ?, ?)";
+        $stmt = $conn->prepare($sql);
+        $stmt->execute([$sender_id, $receiver_id, $message, $orgId]);
+    } else {
+        $sql = "INSERT INTO chats (sender_id, receiver_id, message)
+                VALUES (?, ?, ?)";
+        $stmt = $conn->prepare($sql);
+        $stmt->execute([$sender_id, $receiver_id, $message]);
+    }
 
     return $conn->lastInsertId();
 }
 
-function insertAttachment($chat_id, $attachment_name, $conn){
+function insertAttachment($chat_id, $attachment_name, $conn)
+{
     if (!table_exists($conn, 'chat_attachments')) {
         return;
     }
@@ -36,23 +54,24 @@ function insertAttachment($chat_id, $attachment_name, $conn){
     $stmt->execute([$chat_id, $attachment_name]);
 }
 
-function getAttachments($chat_id, $conn){
+function getAttachments($chat_id, $conn)
+{
     if (!table_exists($conn, 'chat_attachments')) {
         return [];
     }
     $sql = "SELECT attachment_name FROM chat_attachments WHERE chat_id = ?";
     $stmt = $conn->prepare($sql);
     $stmt->execute([$chat_id]);
-    
-    if($stmt->rowCount() > 0){
-        return $stmt->fetchAll(PDO::FETCH_COLUMN); // Returns array of filenames
-    }else{
-        return [];
+
+    if ($stmt->rowCount() > 0) {
+        return $stmt->fetchAll(PDO::FETCH_COLUMN);
     }
+    return [];
 }
 
 if (!function_exists('table_exists')) {
-    function table_exists($conn, $table_name){
+    function table_exists($conn, $table_name)
+    {
         try {
             $sql = "SELECT 1 FROM information_schema.tables WHERE table_name = ?";
             $stmt = $conn->prepare($sql);
@@ -64,77 +83,67 @@ if (!function_exists('table_exists')) {
     }
 }
 
-function lastChat($id_1, $id_2, $conn){
+function lastChat($id_1, $id_2, $conn)
+{
     $sql = "SELECT * FROM chats
-            WHERE (sender_id = ? AND receiver_id = ?)
-            OR (receiver_id = ? AND sender_id = ?)
-            ORDER BY chat_id DESC LIMIT 1";
-    $stmt = $conn->prepare($sql);
-    $stmt->execute([$id_1, $id_2, $id_1, $id_2]);
+            WHERE ((sender_id = ? AND receiver_id = ?)
+               OR (receiver_id = ? AND sender_id = ?))";
+    [$sql, $params] = message_scope($conn, $sql, [$id_1, $id_2, $id_1, $id_2], 'AND');
+    $sql .= " ORDER BY chat_id DESC LIMIT 1";
 
-    if($stmt->rowCount() > 0){
-        $chat = $stmt->fetch();
-        return $chat;
-    }else{
-        $chat = [];
-        return $chat;
+    $stmt = $conn->prepare($sql);
+    $stmt->execute($params);
+
+    if ($stmt->rowCount() > 0) {
+        return $stmt->fetch();
     }
+    return [];
 }
 
-function countUnreadChat($sender_id, $receiver_id, $conn){
-    $sql = "SELECT * FROM chats
+function countUnreadChat($sender_id, $receiver_id, $conn)
+{
+    $sql = "SELECT COUNT(*) FROM chats
             WHERE sender_id = ? AND receiver_id = ? AND opened = false";
+    [$sql, $params] = message_scope($conn, $sql, [$sender_id, $receiver_id], 'AND');
     $stmt = $conn->prepare($sql);
-    $stmt->execute([$sender_id, $receiver_id]);
-
-    if($stmt->rowCount() > 0){
-        $chats = $stmt->fetchAll();
-        return count($chats);
-    }else{
-        return 0; 
-    }
+    $stmt->execute($params);
+    return (int)$stmt->fetchColumn();
 }
 
-function countAllUnread($receiver_id, $conn){
-    $sql = "SELECT * FROM chats
+function countAllUnread($receiver_id, $conn)
+{
+    $sql = "SELECT COUNT(*) FROM chats
             WHERE receiver_id = ? AND opened = false";
+    [$sql, $params] = message_scope($conn, $sql, [$receiver_id], 'AND');
     $stmt = $conn->prepare($sql);
-    $stmt->execute([$receiver_id]);
-
-    if($stmt->rowCount() > 0){
-        $chats = $stmt->fetchAll();
-        return count($chats);
-    }else{
-        return 0;
-    }
+    $stmt->execute($params);
+    return (int)$stmt->fetchColumn();
 }
 
-function opend($id_1, $conn, $chats){
+function opend($id_1, $conn, $chats)
+{
     foreach ($chats as $chat) {
         if ($chat['opened'] == false && $chat['receiver_id'] == $id_1) {
             $driver = $conn->getAttribute(PDO::ATTR_DRIVER_NAME);
             $openedValue = ($driver === 'pgsql') ? true : 1;
             $chat_id = $chat['chat_id'];
 
-            $sql = "UPDATE chats
-                    SET opened = ?
-                    WHERE chat_id = ?";
+            $sql = "UPDATE chats SET opened = ? WHERE chat_id = ?";
+            [$sql, $params] = message_scope($conn, $sql, [$openedValue, $chat_id], 'AND');
             $stmt = $conn->prepare($sql);
-            $stmt->execute([$openedValue, $chat_id]);
+            $stmt->execute($params);
         }
     }
 }
 
-function formatChatTime($timestamp){
+function formatChatTime($timestamp)
+{
     $time = strtotime($timestamp);
     $currentDate = date('Y-m-d');
     $msgDate = date('Y-m-d', $time);
 
-    if($currentDate == $msgDate){
-        // Recent (Today) -> 10:30 pm
+    if ($currentDate == $msgDate) {
         return date('g:i a', $time);
-    }else{
-        // Older -> January 31, 2026
-        return date('F j, Y', $time);
     }
+    return date('F j, Y', $time);
 }

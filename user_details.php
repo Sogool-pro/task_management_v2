@@ -2,6 +2,7 @@
 session_start();
 if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
     include "DB_connection.php";
+    require_once "inc/tenant.php";
     include "app/model/user.php";
     include "app/model/Task.php";
 
@@ -25,8 +26,12 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
         $sql = "SELECT COUNT(*) FROM tasks t 
                 JOIN task_assignees ta ON t.id = ta.task_id 
                 WHERE ta.user_id = ? AND t.status = ?";
+        $params = [$user_id, $status];
+        $scope = tenant_get_scope($pdo, 'tasks', 't');
+        $sql .= $scope['sql'];
+        $params = array_merge($params, $scope['params']);
         $stmt = $pdo->prepare($sql);
-        $stmt->execute([$user_id, $status]);
+        $stmt->execute($params);
         return $stmt->fetchColumn();
     }
 
@@ -36,12 +41,15 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
 
     // Recent Tasks (Fix: Use task_assignees)
     function get_recent_user_tasks($pdo, $user_id) {
+        $params = [$user_id];
+        $scope = tenant_get_scope($pdo, 'tasks', 't');
         $sql = "SELECT t.* FROM tasks t 
                 JOIN task_assignees ta ON t.id = ta.task_id 
-                WHERE ta.user_id = ? 
+                WHERE ta.user_id = ?" . $scope['sql'] . " 
                 ORDER BY t.created_at DESC LIMIT 5";
+        $params = array_merge($params, $scope['params']);
         $stmt = $pdo->prepare($sql);
-        $stmt->execute([$user_id]);
+        $stmt->execute($params);
         return $stmt->fetchAll();
     }
     $recent_tasks = get_recent_user_tasks($pdo, $user_id);

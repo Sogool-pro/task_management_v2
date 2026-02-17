@@ -1,0 +1,147 @@
+<?php
+session_start();
+
+include "../DB_connection.php";
+require_once "../inc/tenant.php";
+
+function validate_input($data)
+{
+    $data = trim($data);
+    $data = stripslashes($data);
+    $data = htmlspecialchars($data);
+    return $data;
+}
+
+if (!isset($_POST['token']) || !isset($_POST['password']) || !isset($_POST['confirm_password']) || !isset($_POST['full_name'])) {
+    header("Location: ../login.php?error=Invalid invitation request.");
+    exit();
+}
+
+$token = validate_input($_POST['token']);
+$password = (string)$_POST['password'];
+$confirmPassword = (string)$_POST['confirm_password'];
+$fullName = validate_input($_POST['full_name']);
+
+if ($token === '') {
+    header("Location: ../join-workspace.php?error=Invitation token is missing.");
+    exit();
+}
+
+if ($fullName === '') {
+    header("Location: ../join-workspace.php?token=" . urlencode($token) . "&error=" . urlencode("Full name is required."));
+    exit();
+}
+
+if ($password === '' || $confirmPassword === '') {
+    header("Location: ../join-workspace.php?token=" . urlencode($token) . "&error=" . urlencode("Password fields are required."));
+    exit();
+}
+
+if (strlen($password) < 8) {
+    header("Location: ../join-workspace.php?token=" . urlencode($token) . "&error=" . urlencode("Password must be at least 8 characters."));
+    exit();
+}
+
+if ($password !== $confirmPassword) {
+    header("Location: ../join-workspace.php?token=" . urlencode($token) . "&error=" . urlencode("Passwords do not match."));
+    exit();
+}
+
+if (!tenant_table_exists($pdo, 'workspace_invites')) {
+    header("Location: ../join-workspace.php?error=Invitation system is not available.");
+    exit();
+}
+
+try {
+    $pdo->beginTransaction();
+
+    $stmt = $pdo->prepare(
+        "SELECT wi.*, o.status AS organization_status
+         FROM workspace_invites wi
+         JOIN organizations o ON o.id = wi.organization_id
+         WHERE wi.token = ?
+         LIMIT 1
+         FOR UPDATE"
+    );
+    $stmt->execute([$token]);
+    $invite = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if (!$invite) {
+        throw new RuntimeException("Invalid invitation link.");
+    }
+
+    $inviteStatus = strtolower((string)$invite['status']);
+    if ($inviteStatus !== 'pending') {
+        throw new RuntimeException("This invitation is no longer active.");
+    }
+
+    if (strtotime((string)$invite['expires_at']) <= time()) {
+        $upd = $pdo->prepare("UPDATE workspace_invites SET status = 'expired' WHERE id = ?");
+        $upd->execute([(int)$invite['id']]);
+        throw new RuntimeException("This invitation has expired.");
+    }
+
+    $orgStatus = strtolower((string)($invite['organization_status'] ?? 'active'));
+    if (in_array($orgStatus, ['suspended', 'canceled'], true)) {
+        throw new RuntimeException("This workspace is currently unavailable.");
+    }
+
+    $email = strtolower((string)$invite['email']);
+    $inviteRole = strtolower((string)($invite['role'] ?? 'employee'));
+    $role = ($inviteRole === 'admin') ? 'admin' : 'employee';
+
+    // Current auth expects username/email to be globally unique.
+    $stmt = $pdo->prepare("SELECT id FROM users WHERE username = ? LIMIT 1");
+    $stmt->execute([$email]);
+    if ($stmt->fetchColumn()) {
+        throw new RuntimeException("This email already has an account. Ask your admin to use password reset.");
+    }
+
+    $passwordHash = password_hash($password, PASSWORD_DEFAULT);
+    $organizationId = (int)$invite['organization_id'];
+
+    if (tenant_column_exists($pdo, 'users', 'organization_id')) {
+        $sql = "INSERT INTO users (full_name, username, password, role, must_change_password, organization_id)
+                VALUES (?, ?, ?, ?, FALSE, ?)";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([$fullName, $email, $passwordHash, $role, $organizationId]);
+    } else {
+        $sql = "INSERT INTO users (full_name, username, password, role, must_change_password)
+                VALUES (?, ?, ?, ?, FALSE)";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([$fullName, $email, $passwordHash, $role]);
+    }
+
+    $newUserId = (int)$pdo->lastInsertId();
+
+    if (tenant_table_exists($pdo, 'organization_members')) {
+        $memberRole = $role === 'admin' ? 'admin' : 'member';
+        $stmt = $pdo->prepare(
+            "INSERT INTO organization_members (organization_id, user_id, role)
+             VALUES (?, ?, ?)"
+        );
+        $stmt->execute([$organizationId, $newUserId, $memberRole]);
+    }
+
+    $stmt = $pdo->prepare(
+        "UPDATE workspace_invites
+         SET status = 'accepted',
+             accepted_at = NOW(),
+             accepted_user_id = ?
+         WHERE id = ?"
+    );
+    $stmt->execute([$newUserId, (int)$invite['id']]);
+
+    $pdo->commit();
+
+    $msg = "Account created successfully. You can now log in.";
+    header("Location: ../login.php?success=" . urlencode($msg));
+    exit();
+} catch (Throwable $e) {
+    if ($pdo->inTransaction()) {
+        $pdo->rollBack();
+    }
+    $err = $e->getMessage() ?: "Unable to accept invitation.";
+    header("Location: ../join-workspace.php?token=" . urlencode($token) . "&error=" . urlencode($err));
+    exit();
+}

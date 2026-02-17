@@ -397,6 +397,9 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] == "
                 <h2 style="font-size: 24px; font-weight: 700; color: var(--text-dark); margin: 0;">Users Directory</h2>
                 
                 <div style="display: flex; gap: 10px; align-items: center;">
+                     <a href="invite-user.php" class="btn-primary" style="display:inline-flex; align-items:center; gap:6px;">
+                        <i class="fa fa-user-plus"></i> Invite User
+                     </a>
                      <a href="user.php?role=employee" class="btn-outline <?= ($role_filter == 'employee') ? 'filter-active' : '' ?>">Employees</a>
                      <?php if ($is_super_admin) { ?>
                         <a href="user.php?role=admin" class="btn-outline <?= ($role_filter == 'admin') ? 'filter-active' : '' ?>">Admins</a>

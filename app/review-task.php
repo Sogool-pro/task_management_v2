@@ -4,6 +4,7 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] == "
     
     if (isset($_POST['task_id']) && isset($_POST['action']) && isset($_POST['feedback'])) {
         include "../DB_connection.php";
+        require_once "../inc/tenant.php";
         include "model/Task.php";
         include "model/Notification.php";
 
@@ -37,8 +38,12 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] == "
 
         // Update task status and comment
         $sql = "UPDATE tasks SET status = ?, review_comment = ? WHERE id = ?";
+        $params = [$status, $feedback, $task_id];
+        $scope = tenant_get_scope($pdo, 'tasks');
+        $sql .= $scope['sql'];
+        $params = array_merge($params, $scope['params']);
         $stmt = $pdo->prepare($sql);
-        $stmt->execute([$status, $feedback, $task_id]);
+        $stmt->execute($params);
         
         // Notify the assignee
         if ($task['assigned_to']) {

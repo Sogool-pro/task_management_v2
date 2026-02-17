@@ -8,8 +8,10 @@ if (!isset($_SESSION['id'])) {
 }
 
 require 'DB_connection.php';
+require_once 'inc/tenant.php';
 
 $user_id = $_SESSION['id'];
+$organization_id = tenant_get_current_org_id();
 $attendance_id = isset($_POST['attendance_id']) ? (int) $_POST['attendance_id'] : null;
 
 // DEBUG LOGGING
@@ -71,10 +73,17 @@ $logEntry .= "Success: Saved to $fullPath\n";
 file_put_contents($logFile, $logEntry, FILE_APPEND);
 
 // Insert new screenshot record (Append history)
-$sql = "INSERT INTO screenshots (user_id, attendance_id, image_path, taken_at)
-        VALUES (?, ?, ?, NOW())";
-$stmt = $pdo->prepare($sql);
-$stmt->execute([$user_id, $attendance_id ?: null, $relativePath]);
+if (tenant_column_exists($pdo, 'screenshots', 'organization_id') && $organization_id) {
+    $sql = "INSERT INTO screenshots (user_id, attendance_id, image_path, taken_at, organization_id)
+            VALUES (?, ?, ?, NOW(), ?)";
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute([$user_id, $attendance_id ?: null, $relativePath, $organization_id]);
+} else {
+    $sql = "INSERT INTO screenshots (user_id, attendance_id, image_path, taken_at)
+            VALUES (?, ?, ?, NOW())";
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute([$user_id, $attendance_id ?: null, $relativePath]);
+}
 
 // CLEANUP: Delete screenshots older than 7 days
 // This runs on every save to keep storage managed
@@ -82,8 +91,12 @@ $seven_days_ago = date('Y-m-d H:i:s', strtotime('-7 days'));
 
 // 1. Get files to delete
 $sql_cleanup = "SELECT id, image_path FROM screenshots WHERE taken_at < ?";
+$cleanupParams = [$seven_days_ago];
+$scope = tenant_get_scope($pdo, 'screenshots');
+$sql_cleanup .= $scope['sql'];
+$cleanupParams = array_merge($cleanupParams, $scope['params']);
 $stmt_cleanup = $pdo->prepare($sql_cleanup);
-$stmt_cleanup->execute([$seven_days_ago]);
+$stmt_cleanup->execute($cleanupParams);
 $old_records = $stmt_cleanup->fetchAll(PDO::FETCH_ASSOC);
 
 if (!empty($old_records)) {
@@ -99,8 +112,10 @@ if (!empty($old_records)) {
     
     // 3. Delete DB records
     $sql_del_cleanup = "DELETE FROM screenshots WHERE taken_at < ?";
+    $scope = tenant_get_scope($pdo, 'screenshots');
+    $sql_del_cleanup .= $scope['sql'];
     $stmt_del_cleanup = $pdo->prepare($sql_del_cleanup);
-    $stmt_del_cleanup->execute([$seven_days_ago]);
+    $stmt_del_cleanup->execute(array_merge([$seven_days_ago], $scope['params']));
     
     // Log cleanup
     $count = count($old_records);

@@ -4,6 +4,7 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
 
 if (isset($_POST['user_name']) && isset($_POST['password']) && isset($_POST['full_name']) && $_SESSION['role'] == 'admin') {
 	include "../DB_connection.php";
+    require_once "../inc/tenant.php";
 
     function validate_input($data) {
 	  $data = trim($data);
@@ -34,6 +35,15 @@ if (isset($_POST['user_name']) && isset($_POST['password']) && isset($_POST['ful
     
        include "model/user.php";
        $is_super_admin = is_super_admin($_SESSION['id'], $pdo);
+       $orgId = tenant_get_current_org_id();
+       $is_owner = false;
+       if ($orgId && tenant_table_exists($pdo, 'organization_members')) {
+           $ownerStmt = $pdo->prepare(
+               "SELECT role FROM organization_members WHERE organization_id = ? AND user_id = ? LIMIT 1"
+           );
+           $ownerStmt->execute([$orgId, $_SESSION['id']]);
+           $is_owner = $ownerStmt->fetchColumn() === 'owner';
+       }
 
        // Check if trying to change role
        $target_user = get_user_by_id($pdo, $id);
@@ -44,7 +54,7 @@ if (isset($_POST['user_name']) && isset($_POST['password']) && isset($_POST['ful
        }
 
        // Security: Non-super-admin cannot edit an admin
-       if ($target_user['role'] == 'admin' && !$is_super_admin && $target_user['id'] != $_SESSION['id']) {
+       if ($target_user['role'] == 'admin' && !$is_super_admin && !$is_owner && $target_user['id'] != $_SESSION['id']) {
            $em = "Access denied";
            header("Location: ../edit-user.php?error=$em&id=$id");
            exit();
@@ -53,13 +63,21 @@ if (isset($_POST['user_name']) && isset($_POST['password']) && isset($_POST['ful
        if ($password == "**********") {
            // Not changing password
            $sql = "UPDATE users SET full_name=?, username=?, role=? WHERE id=?";
+           $params = [$full_name, $user_name, $role, $id];
+           $scope = tenant_get_scope($pdo, 'users');
+           $sql .= $scope['sql'];
+           $params = array_merge($params, $scope['params']);
            $stmt = $pdo->prepare($sql);
-           $stmt->execute([$full_name, $user_name, $role, $id]);
+           $stmt->execute($params);
        }else {
            $password = password_hash($password, PASSWORD_DEFAULT);
            $sql = "UPDATE users SET full_name=?, username=?, password=?, role=? WHERE id=?";
+           $params = [$full_name, $user_name, $password, $role, $id];
+           $scope = tenant_get_scope($pdo, 'users');
+           $sql .= $scope['sql'];
+           $params = array_merge($params, $scope['params']);
            $stmt = $pdo->prepare($sql);
-           $stmt->execute([$full_name, $user_name, $password, $role, $id]);
+           $stmt->execute($params);
        }
 
        $em = "User updated successfully";

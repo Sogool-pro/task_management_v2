@@ -4,6 +4,7 @@ if ((isset($_SESSION['role']) && $_SESSION['role'] == "employee") || (isset($_SE
 
     if (isset($_POST['task_id']) && isset($_POST['member_id']) && isset($_POST['description']) && isset($_POST['due_date'])) {
         include "../DB_connection.php";
+        require_once "../inc/tenant.php";
         include "model/Subtask.php";
         include "model/Notification.php";
         include "model/Task.php";
@@ -35,8 +36,12 @@ if ((isset($_SESSION['role']) && $_SESSION['role'] == "employee") || (isset($_SE
         else {
             // Check for duplicate subtask (same description in the same task)
             $checkSql = "SELECT id FROM subtasks WHERE task_id = ? AND description = ?";
+            $checkParams = [$task_id, $description];
+            $scope = tenant_get_scope($pdo, 'subtasks');
+            $checkSql .= $scope['sql'];
+            $checkParams = array_merge($checkParams, $scope['params']);
             $checkStmt = $pdo->prepare($checkSql);
-            $checkStmt->execute([$task_id, $description]);
+            $checkStmt->execute($checkParams);
             if ($checkStmt->rowCount() > 0) {
                 $em = "A subtask with this description already exists in this task.";
                 header("Location: ../my_task.php?error=$em");

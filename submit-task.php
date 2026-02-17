@@ -2,6 +2,7 @@
 session_start();
 
 include "DB_connection.php";
+require_once "inc/tenant.php";
 
 // Basic safety checks for POST and FILES
 if (!isset($_POST['task_id']) || !isset($_FILES['submission'])) {
@@ -34,9 +35,13 @@ $sql = "UPDATE tasks SET
         submission_status = 'submitted',
         submitted_at = NOW()
         WHERE id = ?";
+$params = [$fileName, $task_id];
+$scope = tenant_get_scope($pdo, 'tasks');
+$sql .= $scope['sql'];
+$params = array_merge($params, $scope['params']);
 
 $stmt = $pdo->prepare($sql);
-$stmt->execute([$fileName, $task_id]);
+$stmt->execute($params);
 
 // Redirect back to task view for the employee
 header("Location: edit-task-employee.php?id=$task_id&submitted=1");

@@ -1,56 +1,90 @@
 <?php
 
-function insert_subtask($pdo, $data){
-    $sql = "INSERT INTO subtasks (task_id, member_id, description, due_date) VALUES (?, ?, ?, ?)";
+require_once __DIR__ . '/../../inc/tenant.php';
+
+function subtask_append_scope($pdo, $sql, $params, $table, $alias = '', $joinWord = 'AND')
+{
+    $scope = tenant_get_scope($pdo, $table, $alias, $joinWord);
+    return [$sql . $scope['sql'], array_merge($params, $scope['params'])];
+}
+
+function insert_subtask($pdo, $data)
+{
+    $orgId = tenant_get_current_org_id();
+    $hasOrg = tenant_column_exists($pdo, 'subtasks', 'organization_id') && $orgId;
+
+    if ($hasOrg) {
+        $sql = "INSERT INTO subtasks (task_id, member_id, description, due_date, organization_id) VALUES (?, ?, ?, ?, ?)";
+        $params = [$data[0], $data[1], $data[2], $data[3], $orgId];
+    } else {
+        $sql = "INSERT INTO subtasks (task_id, member_id, description, due_date) VALUES (?, ?, ?, ?)";
+        $params = $data;
+    }
+
     $stmt = $pdo->prepare($sql);
-    $stmt->execute($data);
+    $stmt->execute($params);
     return $pdo->lastInsertId();
 }
 
-function get_subtasks_by_task($pdo, $task_id){
-    $sql = "SELECT s.*, u.full_name as member_name 
+function get_subtasks_by_task($pdo, $task_id)
+{
+    $sql = "SELECT s.*, u.full_name as member_name
             FROM subtasks s
             JOIN users u ON s.member_id = u.id
-            WHERE s.task_id = ?
-            ORDER BY s.id DESC";
+            WHERE s.task_id = ?";
+    [$sql, $params] = subtask_append_scope($pdo, $sql, [$task_id], 'subtasks', 's');
+    $sql .= " ORDER BY s.id DESC";
+
     $stmt = $pdo->prepare($sql);
-    $stmt->execute([$task_id]);
+    $stmt->execute($params);
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
-function get_subtask_by_id($pdo, $subtask_id){
+function get_subtask_by_id($pdo, $subtask_id)
+{
     $sql = "SELECT * FROM subtasks WHERE id = ?";
+    [$sql, $params] = subtask_append_scope($pdo, $sql, [$subtask_id], 'subtasks');
     $stmt = $pdo->prepare($sql);
-    $stmt->execute([$subtask_id]);
+    $stmt->execute($params);
     return $stmt->fetch(PDO::FETCH_ASSOC);
 }
 
-function get_subtasks_by_member($pdo, $member_id){
-    $sql = "SELECT s.*, t.title as task_title 
+function get_subtasks_by_member($pdo, $member_id)
+{
+    $sql = "SELECT s.*, t.title as task_title
             FROM subtasks s
             JOIN tasks t ON s.task_id = t.id
-            WHERE s.member_id = ?
-            ORDER BY s.due_date ASC";
+            WHERE s.member_id = ?";
+    [$sql, $params] = subtask_append_scope($pdo, $sql, [$member_id], 'subtasks', 's');
+    $sql .= " ORDER BY s.due_date ASC";
+
     $stmt = $pdo->prepare($sql);
-    $stmt->execute([$member_id]);
+    $stmt->execute($params);
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
-function update_subtask_submission($pdo, $id, $file_path, $note = null){
+function update_subtask_submission($pdo, $id, $file_path, $note = null)
+{
     $sql = "UPDATE subtasks SET submission_file = ?, submission_note = ?, status = 'submitted', updated_at = NOW() WHERE id = ?";
+    [$sql, $params] = subtask_append_scope($pdo, $sql, [$file_path, $note, $id], 'subtasks');
     $stmt = $pdo->prepare($sql);
-    $stmt->execute([$file_path, $note, $id]);
+    $stmt->execute($params);
 }
 
-function update_subtask_status($pdo, $id, $status, $feedback = null, $score = null){
+function update_subtask_status($pdo, $id, $status, $feedback = null, $score = null)
+{
     $sql = "UPDATE subtasks SET status = ?, feedback = ?, score = ?, updated_at = NOW() WHERE id = ?";
+    [$sql, $params] = subtask_append_scope($pdo, $sql, [$status, $feedback, $score, $id], 'subtasks');
     $stmt = $pdo->prepare($sql);
-    $stmt->execute([$status, $feedback, $score, $id]);
+    $stmt->execute($params);
 }
 
-function delete_subtask($pdo, $id){
-    $stmt = $pdo->prepare("DELETE FROM subtasks WHERE id = ?");
-    $stmt->execute([$id]);
+function delete_subtask($pdo, $id)
+{
+    $sql = "DELETE FROM subtasks WHERE id = ?";
+    [$sql, $params] = subtask_append_scope($pdo, $sql, [$id], 'subtasks');
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($params);
 }
 
 function subtask_model_column_exists($pdo, $table, $column)
@@ -88,14 +122,14 @@ function subtask_apply_peer_smoothing($peer_raw, $n, $prior_mean = 3.5, $prior_w
  * Get collaborative scores breakdown by project/task for a user
  * Returns overall stats and per-project breakdown
  */
-function get_collaborative_scores_by_user($pdo, $user_id) {
+function get_collaborative_scores_by_user($pdo, $user_id)
+{
     $user_id = (int)$user_id;
 
-    // If user is a leader in at least one task, collaborative score is based on:
-    // 1) Admin's leader rating (task_assignees.performance_rating for leader row)
-    // 2) Team members' leader feedback (leader_feedback.rating)
-    $stmt = $pdo->prepare("SELECT COUNT(*) FROM task_assignees WHERE user_id = ? AND role = 'leader'");
-    $stmt->execute([$user_id]);
+    $sql = "SELECT COUNT(*) FROM task_assignees WHERE user_id = ? AND role = 'leader'";
+    [$sql, $params] = subtask_append_scope($pdo, $sql, [$user_id], 'task_assignees');
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($params);
     $leader_task_count = (int)$stmt->fetchColumn();
 
     if ($leader_task_count > 0) {
@@ -111,8 +145,9 @@ function get_collaborative_scores_by_user($pdo, $user_id) {
                             AND role = 'leader'
                             AND performance_rating IS NOT NULL
                             AND performance_rating > 0";
+            [$sql_admin, $params_admin] = subtask_append_scope($pdo, $sql_admin, [$user_id], 'task_assignees');
             $stmt = $pdo->prepare($sql_admin);
-            $stmt->execute([$user_id]);
+            $stmt->execute($params_admin);
             $admin = $stmt->fetch(PDO::FETCH_ASSOC);
             $admin_count = (int)($admin['count'] ?? 0);
             $admin_avg = ($admin_count > 0 && $admin['avg'] !== null) ? (float)$admin['avg'] : null;
@@ -125,8 +160,9 @@ function get_collaborative_scores_by_user($pdo, $user_id) {
             $sql_peer = "SELECT COUNT(*) AS count, AVG(rating) AS avg
                          FROM leader_feedback
                          WHERE leader_id = ?";
+            [$sql_peer, $params_peer] = subtask_append_scope($pdo, $sql_peer, [$user_id], 'leader_feedback');
             $stmt = $pdo->prepare($sql_peer);
-            $stmt->execute([$user_id]);
+            $stmt->execute($params_peer);
             $peer = $stmt->fetch(PDO::FETCH_ASSOC);
             $peer_count = (int)($peer['count'] ?? 0);
             $peer_avg_raw = ($peer_count > 0 && $peer['avg'] !== null) ? (float)$peer['avg'] : null;
@@ -145,10 +181,15 @@ function get_collaborative_scores_by_user($pdo, $user_id) {
         $sql_tasks = "SELECT t.id AS task_id, t.title AS task_title
                       FROM tasks t
                       JOIN task_assignees ta ON ta.task_id = t.id
-                      WHERE ta.user_id = ? AND ta.role = 'leader'
-                      ORDER BY t.title ASC";
+                      WHERE ta.user_id = ? AND ta.role = 'leader'";
+        $params_tasks = [$user_id];
+        $scopeTasks = tenant_get_scope($pdo, 'tasks', 't');
+        $scopeTa = tenant_get_scope($pdo, 'task_assignees', 'ta');
+        $sql_tasks .= $scopeTasks['sql'] . $scopeTa['sql'] . " ORDER BY t.title ASC";
+        $params_tasks = array_merge($params_tasks, $scopeTasks['params']);
+        $params_tasks = array_merge($params_tasks, $scopeTa['params']);
         $stmt = $pdo->prepare($sql_tasks);
-        $stmt->execute([$user_id]);
+        $stmt->execute($params_tasks);
         $leader_tasks = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         foreach ($leader_tasks as $t) {
@@ -163,10 +204,11 @@ function get_collaborative_scores_by_user($pdo, $user_id) {
                           AND user_id = ?
                           AND role = 'leader'
                           AND performance_rating IS NOT NULL
-                          AND performance_rating > 0
-                        LIMIT 1";
+                          AND performance_rating > 0";
+                [$sql, $params_local] = subtask_append_scope($pdo, $sql, [$task_id, $user_id], 'task_assignees');
+                $sql .= " LIMIT 1";
                 $stmt = $pdo->prepare($sql);
-                $stmt->execute([$task_id, $user_id]);
+                $stmt->execute($params_local);
                 $task_admin_rating = $stmt->fetchColumn();
                 if ($task_admin_rating !== false) {
                     $task_admin_count = 1;
@@ -181,8 +223,9 @@ function get_collaborative_scores_by_user($pdo, $user_id) {
                 $sql = "SELECT COUNT(*) AS count, AVG(rating) AS avg
                         FROM leader_feedback
                         WHERE task_id = ? AND leader_id = ?";
+                [$sql, $params_local] = subtask_append_scope($pdo, $sql, [$task_id, $user_id], 'leader_feedback');
                 $stmt = $pdo->prepare($sql);
-                $stmt->execute([$task_id, $user_id]);
+                $stmt->execute($params_local);
                 $task_peer = $stmt->fetch(PDO::FETCH_ASSOC);
                 $task_peer_count = (int)($task_peer['count'] ?? 0);
                 $task_peer_avg_raw = ($task_peer_count > 0 && $task_peer['avg'] !== null) ? (float)$task_peer['avg'] : null;
@@ -213,23 +256,28 @@ function get_collaborative_scores_by_user($pdo, $user_id) {
         ];
     }
 
-    // Member collaborative score: based on scored subtasks.
-    $sql_overall = "SELECT COUNT(*) as count, AVG(s.score) as avg 
-                    FROM subtasks s 
+    $sql_overall = "SELECT COUNT(*) as count, AVG(s.score) as avg
+                    FROM subtasks s
                     WHERE s.member_id = ? AND s.score IS NOT NULL";
+    [$sql_overall, $params_overall] = subtask_append_scope($pdo, $sql_overall, [$user_id], 'subtasks', 's');
     $stmt = $pdo->prepare($sql_overall);
-    $stmt->execute([$user_id]);
+    $stmt->execute($params_overall);
     $overall = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    $sql_breakdown = "SELECT t.id as task_id, t.title as task_title, 
+    $sql_breakdown = "SELECT t.id as task_id, t.title as task_title,
                              COUNT(s.id) as subtask_count, AVG(s.score) as avg_score
                       FROM subtasks s
                       JOIN tasks t ON s.task_id = t.id
-                      WHERE s.member_id = ? AND s.score IS NOT NULL
+                      WHERE s.member_id = ? AND s.score IS NOT NULL";
+    $params_breakdown = [$user_id];
+    $scope = tenant_get_scope($pdo, 'subtasks', 's');
+    $sql_breakdown .= $scope['sql'] . "
                       GROUP BY t.id, t.title
                       ORDER BY t.title ASC";
+    $params_breakdown = array_merge($params_breakdown, $scope['params']);
+
     $stmt = $pdo->prepare($sql_breakdown);
-    $stmt->execute([$user_id]);
+    $stmt->execute($params_breakdown);
     $breakdown = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     return [

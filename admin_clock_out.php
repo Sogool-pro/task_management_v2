@@ -4,6 +4,7 @@ date_default_timezone_set('Asia/Manila');
 header('Content-Type: application/json');
 
 require 'DB_connection.php';
+require_once 'inc/tenant.php';
 
 // Only allow admins
 if (!isset($_SESSION['id']) || $_SESSION['role'] !== 'admin') {
@@ -31,10 +32,14 @@ $sql = "SELECT * FROM attendance
         WHERE user_id = ? 
         AND att_date = ? 
         AND time_in IS NOT NULL 
-        AND (time_out IS NULL OR time_out = '00:00:00')
+        AND (time_out IS NULL OR time_out = '00:00:00')";
+$params = [$user_id, $today];
+$scope = tenant_get_scope($pdo, 'attendance');
+$sql .= $scope['sql'] . "
         LIMIT 1";
+$params = array_merge($params, $scope['params']);
 $stmt = $pdo->prepare($sql);
-$stmt->execute([$user_id, $today]);
+$stmt->execute($params);
 $att = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$att) {
@@ -47,7 +52,11 @@ $hours = round((strtotime($now) - strtotime($att['time_in'])) / 3600, 2);
 
 // Update attendance record
 $sql = "UPDATE attendance SET time_out = ?, total_hours = ? WHERE id = ?";
-$pdo->prepare($sql)->execute([$now, $hours, $att['id']]);
+$params = [$now, $hours, $att['id']];
+$scope = tenant_get_scope($pdo, 'attendance');
+$sql .= $scope['sql'];
+$params = array_merge($params, $scope['params']);
+$pdo->prepare($sql)->execute($params);
 
 echo json_encode([
     'status' => 'success',

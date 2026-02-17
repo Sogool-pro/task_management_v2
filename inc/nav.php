@@ -69,6 +69,12 @@
 					</a>
 				</li>
 				<li>
+					<a href="invite-user.php">
+						<i class="fa fa-user-plus" aria-hidden="true"></i>
+						<span>Invite Users</span>
+					</a>
+				</li>
+				<li>
 					<a href="create_task.php">
 						<i class="fa fa-plus" aria-hidden="true"></i>
 						<span>Create Task</span>

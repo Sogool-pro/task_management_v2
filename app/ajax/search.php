@@ -6,6 +6,7 @@ if (isset($_SESSION['id'])) {
     if (isset($_POST['key'])) {
 
        include "../../DB_connection.php";
+       require_once "../../inc/tenant.php";
        include "../model/user.php";
        include "../model/Message.php";
        include "../model/Group.php";
@@ -14,9 +15,13 @@ if (isset($_SESSION['id'])) {
        $key = "%{$_POST['key']}%";
      
        $sql = "SELECT * FROM users
-               WHERE LOWER(full_name) LIKE LOWER(?) OR LOWER(username) LIKE LOWER(?)";
+               WHERE (LOWER(full_name) LIKE LOWER(?) OR LOWER(username) LIKE LOWER(?))";
+       $params = [$key, $key];
+       $scope = tenant_get_scope($pdo, 'users');
+       $sql .= $scope['sql'];
+       $params = array_merge($params, $scope['params']);
        $stmt = $pdo->prepare($sql);
-       $stmt->execute([$key, $key]);
+       $stmt->execute($params);
 
        ob_start();
        if($stmt->rowCount() > 0){ 
@@ -91,10 +96,14 @@ if (isset($_SESSION['id'])) {
                     FROM groups g
                     INNER JOIN group_members gm ON g.id = gm.group_id
                      WHERE gm.user_id = ?
-                       AND LOWER(g.name) LIKE LOWER(?)
+                       AND LOWER(g.name) LIKE LOWER(?)";
+       $groupParams = [$_SESSION['id'], $key];
+       $scope = tenant_get_scope($pdo, 'groups', 'g');
+       $groupSql .= $scope['sql'] . "
                      ORDER BY g.id DESC";
+       $groupParams = array_merge($groupParams, $scope['params']);
        $groupStmt = $pdo->prepare($groupSql);
-       $groupStmt->execute([$_SESSION['id'], $key]);
+       $groupStmt->execute($groupParams);
        $groups = $groupStmt->fetchAll();
 
        ob_start();

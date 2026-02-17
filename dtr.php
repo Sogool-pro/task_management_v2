@@ -8,6 +8,7 @@ if (!isset($_SESSION['id']) || $_SESSION['role'] !== 'employee') {
 }
 
 require 'DB_connection.php';
+require_once 'inc/tenant.php';
 
 $user_id = $_SESSION['id'];
 
@@ -16,10 +17,14 @@ $user_id = $_SESSION['id'];
 -------------------------- */
 $sql = "SELECT att_date, time_in, time_out, total_hours
         FROM attendance
-        WHERE user_id = ?
+        WHERE user_id = ?";
+$params = [$user_id];
+$scope = tenant_get_scope($pdo, 'attendance');
+$sql .= $scope['sql'] . "
         ORDER BY att_date ASC";
+$params = array_merge($params, $scope['params']);
 $stmt = $pdo->prepare($sql);
-$stmt->execute([$user_id]);
+$stmt->execute($params);
 $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 /* -------------------------

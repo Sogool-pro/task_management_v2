@@ -4,6 +4,7 @@ if ((isset($_SESSION['role']) && $_SESSION['role'] == "employee") || (isset($_SE
     
     if (isset($_POST['task_id'])) {
         include "../DB_connection.php";
+        require_once "../inc/tenant.php";
         include "model/Notification.php";
         include "model/Task.php";
         include "model/LeaderFeedback.php";
@@ -40,13 +41,21 @@ if ((isset($_SESSION['role']) && $_SESSION['role'] == "employee") || (isset($_SE
         // Update task status to 'completed' again.
         if ($file_path) {
             $sql = "UPDATE tasks SET status = 'completed', submission_note = ?, submission_file = ?, rating = NULL, review_comment = NULL, reviewed_by = NULL, reviewed_at = NOW() WHERE id = ?";
+            $params = [$note, $file_path, $task_id];
+            $scope = tenant_get_scope($pdo, 'tasks');
+            $sql .= $scope['sql'];
+            $params = array_merge($params, $scope['params']);
             $stmt = $pdo->prepare($sql);
-            $stmt->execute([$note, $file_path, $task_id]);
+            $stmt->execute($params);
         } else {
             // Keep existing file if not replaced
             $sql = "UPDATE tasks SET status = 'completed', submission_note = ?, rating = NULL, review_comment = NULL, reviewed_by = NULL, reviewed_at = NOW() WHERE id = ?";
+            $params = [$note, $task_id];
+            $scope = tenant_get_scope($pdo, 'tasks');
+            $sql .= $scope['sql'];
+            $params = array_merge($params, $scope['params']);
             $stmt = $pdo->prepare($sql);
-            $stmt->execute([$note, $task_id]);
+            $stmt->execute($params);
         }
 
         // Clear any previous per-assignee ratings for the new review cycle.
@@ -54,8 +63,13 @@ if ((isset($_SESSION['role']) && $_SESSION['role'] == "employee") || (isset($_SE
         clear_leader_feedback_for_task($pdo, $task_id);
 
         // Notify Admin(s)
-        $stmt2 = $pdo->prepare("SELECT id FROM users WHERE role = 'admin'");
-        $stmt2->execute();
+        $adminSql = "SELECT id FROM users WHERE role = 'admin'";
+        $adminParams = [];
+        $scope = tenant_get_scope($pdo, 'users');
+        $adminSql .= $scope['sql'];
+        $adminParams = array_merge($adminParams, $scope['params']);
+        $stmt2 = $pdo->prepare($adminSql);
+        $stmt2->execute($adminParams);
         $admins = $stmt2->fetchAll(PDO::FETCH_ASSOC);
 
         $task = get_task_by_id($pdo, $task_id);

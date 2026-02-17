@@ -2,6 +2,11 @@
 
 This guide is written for beginners. Follow it step by step.
 
+## 0. SaaS docs (read this first if you are enabling workspaces)
+
+- Quick setup: `README-SAAS-QUICKSTART.md`
+- Full beginner guide: `README-SAAS.md`
+
 ## 1. Understand the important files
 
 - `.env.example` = safe template. This file can be pushed to GitHub.
@@ -30,7 +35,12 @@ This guide is written for beginners. Follow it step by step.
 5. Create database (if needed) and import schema/data:
    - `mysql -u your_db_user -p -e "CREATE DATABASE IF NOT EXISTS your_db_name CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"`
    - `mysql -u your_db_user -p your_db_name < task_management_db_mysql.sql`
-6. Open the app:
+6. (SaaS foundation) run the multi-tenant migration:
+   - `mysql -u your_db_user -p your_db_name < sql_add_multi_tenancy_foundation.sql`
+7. (SaaS invite flow) run workspace invites migration:
+   - `mysql -u your_db_user -p your_db_name < sql_create_workspace_invites.sql`
+   - or: `php run_migration_workspace_invites.php`
+8. Open the app:
    - `http://localhost/task_management_v2/login.php`
 
 ## 4. Production deployment checklist

@@ -105,6 +105,9 @@
             <a href="user.php" class="dash-nav-item <?= isActive('user.php') ?>">
                 <i class="fa fa-users"></i> Users
             </a>
+            <a href="invite-user.php" class="dash-nav-item <?= isActive('invite-user.php') ?>">
+                <i class="fa fa-user-plus"></i> Invites
+            </a>
             <a href="groups.php" class="dash-nav-item <?= isActive('groups.php') ?>">
                 <i class="fa fa-object-group"></i> Groups
             </a>
