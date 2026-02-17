@@ -1,6 +1,7 @@
 <?php
 include "DB_connection.php";
 require_once "inc/tenant.php";
+require_once "inc/csrf.php";
 
 $token = trim((string)($_GET['token'] ?? ''));
 $invite = null;
@@ -35,6 +36,11 @@ if ($token === '') {
             $inviteError = "This invitation has expired. Ask your admin to send a new one.";
         } elseif (in_array($orgStatus, ['suspended', 'canceled'], true)) {
             $inviteError = "This workspace is currently unavailable.";
+        } else {
+            $capacity = tenant_check_workspace_capacity($pdo, (int)$invite['organization_id']);
+            if (!$capacity['ok']) {
+                $inviteError = (string)$capacity['reason'];
+            }
         }
     }
 }
@@ -118,6 +124,7 @@ if ($token === '') {
                 </div>
 
                 <form method="POST" action="app/accept-invite.php">
+                    <?= csrf_field('accept_workspace_invite_form') ?>
                     <input type="hidden" name="token" value="<?= htmlspecialchars($token) ?>">
 
                     <div class="form-group">

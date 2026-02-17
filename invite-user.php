@@ -4,6 +4,7 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] === 
     include "DB_connection.php";
     include "app/model/user.php";
     require_once "inc/tenant.php";
+    require_once "inc/csrf.php";
     include "app/mail_config.php";
 
     $is_super_admin = is_super_admin($_SESSION['id'], $pdo);
@@ -14,6 +15,14 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] === 
         header("Location: index.php?error=" . urlencode("Workspace context is missing."));
         exit();
     }
+
+    $capacity = tenant_check_workspace_capacity($pdo, (int)$orgId);
+    $seatUsed = (int)($capacity['seat_used'] ?? 0);
+    $seatLimit = isset($capacity['seat_limit']) ? (int)$capacity['seat_limit'] : null;
+    $seatsLeft = isset($capacity['seats_left']) ? (int)$capacity['seats_left'] : null;
+    $subscriptionStatus = isset($capacity['subscription_status']) && $capacity['subscription_status'] !== null
+        ? strtoupper((string)$capacity['subscription_status'])
+        : 'N/A';
 
     $orgName = $_SESSION['organization_name'] ?? "Workspace";
     if (tenant_table_exists($pdo, 'organizations')) {
@@ -188,6 +197,15 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] === 
         <p style="margin:0; color:#6B7280;">
             Workspace: <strong><?= htmlspecialchars((string)$orgName) ?></strong>
         </p>
+        <p style="margin:6px 0 0; color:#6B7280; font-size:13px;">
+            Subscription: <strong><?= htmlspecialchars($subscriptionStatus) ?></strong>
+            <?php if ($seatLimit !== null) { ?>
+                | Seats: <strong><?= $seatUsed ?>/<?= $seatLimit ?></strong>
+                <?php if ($seatsLeft !== null) { ?>
+                    (<?= max(0, $seatsLeft) ?> left)
+                <?php } ?>
+            <?php } ?>
+        </p>
     </div>
 
     <?php if (isset($_GET['error'])) { ?>
@@ -214,10 +232,15 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] === 
         <div class="card alert-box alert-error">
             Super Admin cannot send workspace invites from this screen.
         </div>
+    <?php } elseif (!$capacity['ok']) { ?>
+        <div class="card alert-box alert-warn">
+            <?= htmlspecialchars((string)$capacity['reason']) ?>
+        </div>
     <?php } else { ?>
         <div class="card">
             <h3 style="margin-top:0;">Send New Invite</h3>
             <form action="app/invite-user.php" method="POST">
+                <?= csrf_field('invite_user_form') ?>
                 <div class="form-row">
                     <div>
                         <label style="display:block; margin-bottom:6px; font-size:13px; color:#374151;">Employee Full Name</label>
@@ -277,6 +300,7 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] === 
                                 <button type="button" class="mini-btn" onclick="copyInviteLink('<?= htmlspecialchars($joinLink, ENT_QUOTES) ?>')">Copy Link</button>
                                 <?php if ($status === 'pending') { ?>
                                     <form action="app/cancel-invite.php" method="POST" style="display:inline-block; margin-left:4px;">
+                                        <?= csrf_field('revoke_invite_form') ?>
                                         <input type="hidden" name="invite_id" value="<?= (int)$invite['id'] ?>">
                                         <button type="submit" class="mini-btn mini-btn-danger" onclick="return confirm('Revoke this invite?')">Revoke</button>
                                     </form>

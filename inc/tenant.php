@@ -117,3 +117,189 @@ if (!function_exists('tenant_resolve_user_membership_role')) {
         return $role ? (string)$role : $fallbackRole;
     }
 }
+
+if (!function_exists('tenant_fetch_subscription')) {
+    function tenant_fetch_subscription($pdo, $orgId)
+    {
+        $orgId = (int)$orgId;
+        if ($orgId <= 0 || !tenant_table_exists($pdo, 'subscriptions')) {
+            return null;
+        }
+
+        $stmt = $pdo->prepare(
+            "SELECT id, organization_id, status, seat_limit, trial_ends_at, current_period_end
+             FROM subscriptions
+             WHERE organization_id = ?
+             LIMIT 1"
+        );
+        $stmt->execute([$orgId]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return $row ?: null;
+    }
+}
+
+if (!function_exists('tenant_ensure_subscription')) {
+    function tenant_ensure_subscription($pdo, $orgId)
+    {
+        $orgId = (int)$orgId;
+        if ($orgId <= 0 || !tenant_table_exists($pdo, 'subscriptions')) {
+            return null;
+        }
+
+        $existing = tenant_fetch_subscription($pdo, $orgId);
+        if ($existing) {
+            return $existing;
+        }
+
+        $trialEndsAt = date('Y-m-d H:i:s', strtotime('+14 days'));
+        $periodEndsAt = date('Y-m-d H:i:s', strtotime('+1 month'));
+
+        try {
+            $stmt = $pdo->prepare(
+                "INSERT INTO subscriptions
+                 (organization_id, provider, status, seat_limit, trial_ends_at, current_period_end)
+                 VALUES (?, 'manual', 'trialing', 10, ?, ?)"
+            );
+            $stmt->execute([$orgId, $trialEndsAt, $periodEndsAt]);
+        } catch (Throwable $e) {
+            // If another request created it first, just fetch the row.
+        }
+
+        return tenant_fetch_subscription($pdo, $orgId);
+    }
+}
+
+if (!function_exists('tenant_count_workspace_members')) {
+    function tenant_count_workspace_members($pdo, $orgId)
+    {
+        $orgId = (int)$orgId;
+        if ($orgId <= 0) {
+            return 0;
+        }
+
+        if (tenant_table_exists($pdo, 'organization_members')) {
+            $stmt = $pdo->prepare(
+                "SELECT COUNT(DISTINCT user_id)
+                 FROM organization_members
+                 WHERE organization_id = ?"
+            );
+            $stmt->execute([$orgId]);
+            return (int)$stmt->fetchColumn();
+        }
+
+        if (tenant_column_exists($pdo, 'users', 'organization_id')) {
+            $stmt = $pdo->prepare("SELECT COUNT(*) FROM users WHERE organization_id = ?");
+            $stmt->execute([$orgId]);
+            return (int)$stmt->fetchColumn();
+        }
+
+        return 0;
+    }
+}
+
+if (!function_exists('tenant_check_workspace_capacity')) {
+    function tenant_check_workspace_capacity($pdo, $orgId)
+    {
+        $orgId = (int)$orgId;
+        if ($orgId <= 0) {
+            return [
+                'ok' => false,
+                'reason' => 'Workspace context is missing.',
+                'subscription_status' => null,
+                'seat_limit' => null,
+                'seat_used' => 0,
+                'seats_left' => null,
+                'trial_ends_at' => null,
+                'current_period_end' => null,
+            ];
+        }
+
+        $subscription = tenant_ensure_subscription($pdo, $orgId);
+        $status = strtolower(trim((string)($subscription['status'] ?? 'active')));
+        $trialEndsAt = $subscription['trial_ends_at'] ?? null;
+        $periodEndsAt = $subscription['current_period_end'] ?? null;
+
+        $seatUsed = tenant_count_workspace_members($pdo, $orgId);
+        $seatLimit = isset($subscription['seat_limit']) ? (int)$subscription['seat_limit'] : null;
+        $seatsLeft = $seatLimit === null ? null : ($seatLimit - $seatUsed);
+
+        $blockedStatuses = [
+            'canceled',
+            'cancelled',
+            'suspended',
+            'inactive',
+            'unpaid',
+            'incomplete',
+            'incomplete_expired',
+            'paused',
+        ];
+        if ($status !== '' && in_array($status, $blockedStatuses, true)) {
+            return [
+                'ok' => false,
+                'reason' => "Workspace subscription is '{$status}'. Please update billing before adding members.",
+                'subscription_status' => $status,
+                'seat_limit' => $seatLimit,
+                'seat_used' => $seatUsed,
+                'seats_left' => $seatsLeft,
+                'trial_ends_at' => $trialEndsAt,
+                'current_period_end' => $periodEndsAt,
+            ];
+        }
+
+        if ($status === 'trialing' && !empty($trialEndsAt)) {
+            $trialTs = strtotime((string)$trialEndsAt);
+            if ($trialTs !== false && $trialTs <= time()) {
+                return [
+                    'ok' => false,
+                    'reason' => 'Workspace trial has ended. Please activate a paid plan before adding members.',
+                    'subscription_status' => $status,
+                    'seat_limit' => $seatLimit,
+                    'seat_used' => $seatUsed,
+                    'seats_left' => $seatsLeft,
+                    'trial_ends_at' => $trialEndsAt,
+                    'current_period_end' => $periodEndsAt,
+                ];
+            }
+        }
+
+        if ($seatLimit !== null) {
+            if ($seatLimit <= 0) {
+                return [
+                    'ok' => false,
+                    'reason' => 'No seats are configured for this workspace subscription.',
+                    'subscription_status' => $status,
+                    'seat_limit' => $seatLimit,
+                    'seat_used' => $seatUsed,
+                    'seats_left' => $seatsLeft,
+                    'trial_ends_at' => $trialEndsAt,
+                    'current_period_end' => $periodEndsAt,
+                ];
+            }
+
+            if ($seatsLeft !== null && $seatsLeft <= 0) {
+                return [
+                    'ok' => false,
+                    'reason' => "Seat limit reached ({$seatUsed}/{$seatLimit}). Remove a user or upgrade your plan.",
+                    'subscription_status' => $status,
+                    'seat_limit' => $seatLimit,
+                    'seat_used' => $seatUsed,
+                    'seats_left' => $seatsLeft,
+                    'trial_ends_at' => $trialEndsAt,
+                    'current_period_end' => $periodEndsAt,
+                ];
+            }
+        }
+
+        return [
+            'ok' => true,
+            'reason' => null,
+            'subscription_status' => $status !== '' ? $status : null,
+            'seat_limit' => $seatLimit,
+            'seat_used' => $seatUsed,
+            'seats_left' => $seatsLeft,
+            'trial_ends_at' => $trialEndsAt,
+            'current_period_end' => $periodEndsAt,
+        ];
+    }
+}

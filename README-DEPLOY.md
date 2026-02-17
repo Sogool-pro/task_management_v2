@@ -6,6 +6,9 @@ This guide is written for beginners. Follow it step by step.
 
 - Quick setup: `README-SAAS-QUICKSTART.md`
 - Full beginner guide: `README-SAAS.md`
+- Support operations cheatsheet: `README-SUPPORT-CHEATSHEET.md`
+- Billing/settings admin page: `workspace-billing.php`
+- Seat update endpoint (used by billing page): `app/update-workspace-seat-limit.php`
 
 ## 1. Understand the important files
 
@@ -98,6 +101,7 @@ If email fails, check:
 3. Never commit database dumps with real user data.
 4. Keep `APP_ENV=production` in live environments.
 5. Keep `ALLOW_MAINTENANCE_SCRIPTS=0` in live environments.
+6. Keep users on normal in-app forms (invite/join/billing actions are CSRF-protected now).
 
 ## 8. Quick go-live test
 
@@ -107,5 +111,8 @@ If email fails, check:
 4. Signup email works.
 5. Reset password email works.
 6. Screenshots/uploads are being saved correctly.
+7. Invite flow works (send invite, accept invite, revoke invite).
+8. Billing seat update form works.
+9. Submitting old/stale invite or billing form shows safe `Invalid or expired request` and does not perform the action.
 
-If all 6 pass, your deployment is in good shape.
+If all checks pass, your deployment is in good shape.

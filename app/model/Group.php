@@ -226,29 +226,29 @@ function sync_task_chat_group_link_and_name($pdo, $task_id, $old_title, $new_tit
 function delete_orphan_task_chat_groups($pdo)
 {
     if (group_column_exists($pdo, 'groups', 'task_id')) {
-        $sql = "DELETE FROM groups g
-                WHERE g.type = 'task_chat'
+        $sql = "DELETE FROM groups
+                WHERE type = 'task_chat'
                   AND (
-                        (g.task_id IS NOT NULL AND NOT EXISTS (
-                            SELECT 1 FROM tasks t WHERE t.id = g.task_id
+                        (task_id IS NOT NULL AND NOT EXISTS (
+                            SELECT 1 FROM tasks t WHERE t.id = groups.task_id
                         ))
                         OR
-                        (g.task_id IS NULL AND NOT EXISTS (
-                            SELECT 1 FROM tasks t WHERE t.title = g.name
+                        (task_id IS NULL AND NOT EXISTS (
+                            SELECT 1 FROM tasks t WHERE t.title = groups.name
                         ))
                       )";
-        [$sql, $params] = group_append_scope($pdo, $sql, [], 'groups', 'g');
+        [$sql, $params] = group_append_scope($pdo, $sql, [], 'groups');
         $stmt = $pdo->prepare($sql);
         $stmt->execute($params);
         return $stmt->rowCount();
     }
 
-    $sql = "DELETE FROM groups g
-            WHERE g.type = 'task_chat'
+    $sql = "DELETE FROM groups
+            WHERE type = 'task_chat'
               AND NOT EXISTS (
-                    SELECT 1 FROM tasks t WHERE t.title = g.name
+                    SELECT 1 FROM tasks t WHERE t.title = groups.name
               )";
-    [$sql, $params] = group_append_scope($pdo, $sql, [], 'groups', 'g');
+    [$sql, $params] = group_append_scope($pdo, $sql, [], 'groups');
     $stmt = $pdo->prepare($sql);
     $stmt->execute($params);
     return $stmt->rowCount();
@@ -261,13 +261,13 @@ function delete_legacy_duplicate_group_chats_by_title($pdo, $title)
     }
 
     $has_task_id = group_column_exists($pdo, 'groups', 'task_id');
-    $taskIdClause = $has_task_id ? "AND g.task_id IS NULL" : "";
+    $taskIdClause = $has_task_id ? "AND groups.task_id IS NULL" : "";
     $taskIdClause2 = $has_task_id ? "AND g2.task_id IS NULL" : "";
 
-    $sql = "DELETE FROM groups g
-            WHERE g.type = 'group'
+    $sql = "DELETE FROM groups
+            WHERE type = 'group'
               {$taskIdClause}
-              AND LOWER(g.name) = LOWER(?)
+              AND LOWER(groups.name) = LOWER(?)
               AND NOT EXISTS (
                     SELECT 1 FROM tasks t WHERE LOWER(t.title) = LOWER(?)
               )
@@ -279,7 +279,7 @@ function delete_legacy_duplicate_group_chats_by_title($pdo, $title)
                       AND LOWER(g2.name) = LOWER(?)
               ) > 1";
     $params = [$title, $title, $title];
-    $scope = tenant_get_scope($pdo, 'groups', 'g');
+    $scope = tenant_get_scope($pdo, 'groups');
     $sql .= $scope['sql'];
     $params = array_merge($params, $scope['params']);
 

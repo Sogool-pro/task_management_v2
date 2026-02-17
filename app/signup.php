@@ -89,6 +89,13 @@ try {
         $orgStmt->execute([$organization_name, $slug, $user_name]);
         $newOrgId = (int)$pdo->lastInsertId();
 
+        if (tenant_table_exists($pdo, 'subscriptions')) {
+            $subscription = tenant_ensure_subscription($pdo, $newOrgId);
+            if (!$subscription) {
+                throw new RuntimeException('Failed to initialize workspace subscription.');
+            }
+        }
+
         $userStmt = $pdo->prepare(
             "INSERT INTO users (full_name, username, password, role, must_change_password, organization_id)
              VALUES (?, ?, ?, 'admin', ?, ?)"

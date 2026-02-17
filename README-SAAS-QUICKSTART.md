@@ -56,6 +56,11 @@ Alternative for invites migration:
 3. Employee opens invite link (`join-workspace.php?token=...`) and sets password.
 4. Employee is automatically attached to the correct workspace.
 
+Important:
+
+- Invite sending and invite acceptance are blocked automatically if seat limit is reached.
+- Invite sending and invite acceptance are also blocked if subscription/trial is not active.
+
 ## 7. Smoke test tenant isolation
 
 Create two workspaces and verify:
@@ -66,7 +71,25 @@ Create two workspaces and verify:
 4. Captures do not cross workspaces.
 5. Dashboard ratings/stats are workspace-local.
 
-## 8. Production safety flags
+## 8. Check billing/settings page
+
+As workspace admin, open:
+
+- `workspace-billing.php`
+
+You should see plan status, seats used/left, and trial/period dates in one place.
+
+If you need to manually upgrade plan capacity:
+
+1. Go to `workspace-billing.php`
+2. In `Manage Seats (Manual)`, set the new seat limit
+3. Click `Update Seats`
+
+Rule:
+
+- Seat limit cannot be set below current active members.
+
+## 9. Production safety flags
 
 In production, keep:
 
@@ -74,7 +97,7 @@ In production, keep:
 2. `ALLOW_GLOBAL_MAINTENANCE=0`
 3. `APP_ENV=production`
 
-## 9. If migration errors appear
+## 10. If migration errors appear
 
 If MariaDB reports `#1067 Invalid default value` during migration:
 
@@ -82,3 +105,20 @@ If MariaDB reports `#1067 Invalid default value` during migration:
 2. Rerun the failed migration statements.
 
 For detailed troubleshooting, use `README-SAAS.md`.
+
+For day-to-day support handling, use `README-SUPPORT-CHEATSHEET.md`.
+
+## 11. New CSRF security behavior (important)
+
+Sensitive SaaS forms are now CSRF-protected:
+
+1. Send invite (`invite-user.php`)
+2. Revoke invite (`invite-user.php` -> `app/cancel-invite.php`)
+3. Accept invite/join workspace (`join-workspace.php` -> `app/accept-invite.php`)
+4. Update seat limit (`workspace-billing.php` -> `app/update-workspace-seat-limit.php`)
+
+If you see `Invalid or expired request`:
+
+1. Refresh the page
+2. Submit again from the app UI (do not reuse old tab/form)
+3. Log in again if session expired
