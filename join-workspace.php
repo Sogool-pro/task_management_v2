@@ -1,4 +1,7 @@
 <?php
+if (session_status() !== PHP_SESSION_ACTIVE) {
+    session_start();
+}
 include "DB_connection.php";
 require_once "inc/tenant.php";
 require_once "inc/csrf.php";
