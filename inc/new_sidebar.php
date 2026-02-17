@@ -108,6 +108,9 @@
             <a href="invite-user.php" class="dash-nav-item <?= isActive('invite-user.php') ?>">
                 <i class="fa fa-user-plus"></i> Invites
             </a>
+            <a href="workspace-billing.php" class="dash-nav-item <?= isActive('workspace-billing.php') ?>">
+                <i class="fa fa-credit-card"></i> Billing
+            </a>
             <a href="groups.php" class="dash-nav-item <?= isActive('groups.php') ?>">
                 <i class="fa fa-object-group"></i> Groups
             </a>

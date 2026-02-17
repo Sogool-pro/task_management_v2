@@ -9,9 +9,15 @@ if (!isset($_SESSION['role']) || !isset($_SESSION['id']) || $_SESSION['role'] !=
 include "../DB_connection.php";
 include "model/user.php";
 require_once "../inc/tenant.php";
+require_once "../inc/csrf.php";
 
 if (!isset($_POST['invite_id'])) {
     header("Location: ../invite-user.php?error=Invite ID is required.");
+    exit();
+}
+
+if (!csrf_verify('revoke_invite_form', $_POST['csrf_token'] ?? null, true)) {
+    header("Location: ../invite-user.php?error=" . urlencode("Invalid or expired request. Please refresh and try again."));
     exit();
 }
 

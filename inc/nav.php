@@ -75,6 +75,12 @@
 					</a>
 				</li>
 				<li>
+					<a href="workspace-billing.php">
+						<i class="fa fa-credit-card" aria-hidden="true"></i>
+						<span>Workspace Billing</span>
+					</a>
+				</li>
+				<li>
 					<a href="create_task.php">
 						<i class="fa fa-plus" aria-hidden="true"></i>
 						<span>Create Task</span>

@@ -9,6 +9,7 @@ if (!isset($_SESSION['role']) || !isset($_SESSION['id']) || $_SESSION['role'] !=
 include "../DB_connection.php";
 include "model/user.php";
 require_once "../inc/tenant.php";
+require_once "../inc/csrf.php";
 include "send_email.php";
 
 function validate_input($data)
@@ -24,6 +25,11 @@ if (!isset($_POST['email']) || !isset($_POST['full_name'])) {
     exit();
 }
 
+if (!csrf_verify('invite_user_form', $_POST['csrf_token'] ?? null, true)) {
+    header("Location: ../invite-user.php?error=" . urlencode("Invalid or expired request. Please refresh and try again."));
+    exit();
+}
+
 $is_super_admin = is_super_admin($_SESSION['id'], $pdo);
 if ($is_super_admin) {
     header("Location: ../invite-user.php?error=Access denied for super admin.");
@@ -33,6 +39,12 @@ if ($is_super_admin) {
 $orgId = tenant_get_current_org_id();
 if (!$orgId) {
     header("Location: ../invite-user.php?error=Workspace context is missing.");
+    exit();
+}
+
+$capacity = tenant_check_workspace_capacity($pdo, (int)$orgId);
+if (!$capacity['ok']) {
+    header("Location: ../invite-user.php?error=" . urlencode((string)$capacity['reason']));
     exit();
 }
 

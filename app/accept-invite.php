@@ -3,6 +3,7 @@ session_start();
 
 include "../DB_connection.php";
 require_once "../inc/tenant.php";
+require_once "../inc/csrf.php";
 
 function validate_input($data)
 {
@@ -14,6 +15,12 @@ function validate_input($data)
 
 if (!isset($_POST['token']) || !isset($_POST['password']) || !isset($_POST['confirm_password']) || !isset($_POST['full_name'])) {
     header("Location: ../login.php?error=Invalid invitation request.");
+    exit();
+}
+
+$requestToken = trim((string)($_POST['token'] ?? ''));
+if (!csrf_verify('accept_workspace_invite_form', $_POST['csrf_token'] ?? null, true)) {
+    header("Location: ../join-workspace.php?token=" . urlencode($requestToken) . "&error=" . urlencode("Invalid or expired request. Please try again."));
     exit();
 }
 
@@ -99,6 +106,11 @@ try {
 
     $passwordHash = password_hash($password, PASSWORD_DEFAULT);
     $organizationId = (int)$invite['organization_id'];
+
+    $capacity = tenant_check_workspace_capacity($pdo, $organizationId);
+    if (!$capacity['ok']) {
+        throw new RuntimeException((string)$capacity['reason']);
+    }
 
     if (tenant_column_exists($pdo, 'users', 'organization_id')) {
         $sql = "INSERT INTO users (full_name, username, password, role, must_change_password, organization_id)
