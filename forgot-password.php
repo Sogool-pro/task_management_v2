@@ -1,3 +1,6 @@
+<?php
+require_once "inc/csrf.php";
+?>
 <!DOCTYPE html>
 <html>
 <head>
@@ -84,6 +87,7 @@
                 <?php } ?>
 
                 <form method="POST" action="app/req-reset-password.php">
+                    <?= csrf_field('req_reset_password_form') ?>
                     
                     <div class="form-group">
                         <label class="form-label">Email Address</label>

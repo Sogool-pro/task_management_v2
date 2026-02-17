@@ -6,6 +6,7 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] === 
     require_once "app/model/Subtask.php";
     require_once "app/model/user.php";
     require_once "app/model/LeaderFeedback.php";
+    require_once "inc/csrf.php";
 
     $text = "Tasks";
     // Filter Logic
@@ -697,6 +698,7 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] === 
             </div>
 
             <form action="app/admin-review-task.php" method="POST">
+                <?= csrf_field('admin_review_task_form') ?>
                 <input type="hidden" name="task_id" id="acceptTaskId">
                 <input type="hidden" name="action" value="accept">
                 
@@ -755,6 +757,7 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] === 
             </div>
 
             <form action="app/admin-review-task.php" method="POST">
+                <?= csrf_field('admin_review_task_form') ?>
                 <input type="hidden" name="task_id" id="reviseTaskId">
                 <input type="hidden" name="action" value="revise">
                 
@@ -782,6 +785,7 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] === 
                     <br>This action cannot be undone.
                 </p>
                 <form action="app/delete-task.php" method="POST">
+                    <?= csrf_field('delete_task_form') ?>
                     <input type="hidden" name="id" id="deleteTaskId">
                     <div style="display: flex; justify-content: center; gap: 10px;">
                         <button type="button" class="btn-v2 btn-white" onclick="closeDeleteModal()">Cancel</button>

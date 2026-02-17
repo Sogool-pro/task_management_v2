@@ -5,6 +5,7 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] == "
     include "app/model/Task.php";
     include "app/model/user.php";
     include "app/model/Subtask.php";
+    require_once "inc/csrf.php";
     
     if (!isset($_GET['id'])) {
     	 header("Location: tasks.php");
@@ -83,6 +84,7 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] == "
 
         <div class="dash-card">
 			<form method="POST" enctype="multipart/form-data" action="app/update-task-employee.php">
+                <?= csrf_field('update_task_employee_form') ?>
                 
                 <div style="margin-bottom: 20px;">
                     <label style="display: block; font-size: 13px; font-weight: 600; color: var(--text-gray); margin-bottom: 5px;">Title</label>
@@ -147,6 +149,7 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] == "
                 <div style="background: #F9FAFB; padding: 20px; border-radius: 12px; border: 1px solid var(--border-color); margin-bottom: 30px;">
                     <h5 style="margin: 0 0 15px 0;">Create New Subtask</h5>
                     <form method="POST" action="app/add-subtask.php">
+                        <?= csrf_field('add_subtask_form') ?>
                         <input type="hidden" name="task_id" value="<?=$id?>">
                         <input type="hidden" name="parent_id" value="<?=$id?>">
                         
@@ -233,6 +236,7 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] == "
                         </div>
                         
                         <form method="POST" action="app/review-subtask.php">
+                            <?= csrf_field('review_subtask_form') ?>
                             <input type="hidden" name="subtask_id" id="reviewSubtaskId">
                             <input type="hidden" name="parent_id" value="<?=$id?>">
                             

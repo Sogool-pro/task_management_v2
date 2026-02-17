@@ -3,6 +3,7 @@ session_start();
 if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] == "admin") {
     if (isset($_POST['group_name']) && isset($_POST['leader_id'])) {
         include "../DB_connection.php";
+        require_once "../inc/csrf.php";
         include "model/Group.php";
 
         function validate_input($data) {
@@ -10,6 +11,12 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] == "
             $data = stripslashes($data);
             $data = htmlspecialchars($data);
             return $data;
+        }
+
+        if (!csrf_verify('add_group_form', $_POST['csrf_token'] ?? null, true)) {
+            $em = "Invalid or expired request. Please refresh and try again.";
+            header("Location: ../groups.php?error=" . urlencode($em));
+            exit();
         }
 
         $group_name = validate_input($_POST['group_name']);

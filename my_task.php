@@ -6,6 +6,7 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
     include "app/model/user.php";
     include "app/model/Subtask.php"; // Include subtask model
     include "app/model/LeaderFeedback.php";
+    require_once "inc/csrf.php";
 
     $tasks = get_all_tasks_by_user($pdo, $_SESSION['id']);
     $users = get_all_users($pdo); // For assigning subtasks
@@ -574,6 +575,7 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
                             </div>
                         <?php } ?>
                         <form action="app/rate-leader.php" method="POST">
+                            <?= csrf_field('rate_leader_form') ?>
                             <input type="hidden" name="task_id" value="<?= (int)$task['id'] ?>">
                             <input type="hidden" name="rating" id="leader-rating-<?= (int)$task['id'] ?>" value="<?= $myLeaderRating ? (int)$myLeaderRating['rating'] : 0 ?>">
                             <div style="display: grid; grid-template-columns: 120px 1fr; gap: 8px; align-items: center;">
@@ -642,6 +644,7 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
                     <!-- Create Subtask Form -->
                     <div class="subtask-create-form" id="subtask-form-<?=$task['id']?>" style="display: none; background: #F9FAFB; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
                         <form action="app/add-subtask.php" method="POST">
+                            <?= csrf_field('add_subtask_form') ?>
                             <input type="hidden" name="task_id" value="<?=$task['id']?>">
                             <input type="hidden" name="parent_id" value="<?=$task['id']?>"> 
                             <div class="form-row" style="margin-bottom: 10px;">
@@ -725,6 +728,7 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
                              <?php if($isLeader && $sub['status'] == 'submitted') { ?>
                                 <div style="margin-top: 15px; border-top: 1px solid #F3F4F6; padding-top: 12px;">
                                     <form action="app/review-subtask.php" method="POST" id="review-form-<?=$sub['id']?>">
+                                        <?= csrf_field('review_subtask_form') ?>
                                         <input type="hidden" name="subtask_id" value="<?=$sub['id']?>">
                                         <input type="hidden" name="parent_id" value="<?=$task['id']?>"> 
                                         
@@ -768,6 +772,7 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
                               <?php if($_SESSION['id'] == $sub['member_id'] && ($sub['status'] == 'pending' || $sub['status'] == 'in_progress' || $sub['status'] == 'revise')) { ?>
                                 <div style="margin-top: 15px; border-top: 1px solid #F3F4F6; padding-top: 12px;">
                                     <form action="app/update-subtask-submission.php" method="POST" enctype="multipart/form-data">
+                                        <?= csrf_field('update_subtask_submission_form') ?>
                                         <input type="hidden" name="id" value="<?=$sub['id']?>">
                                         
                                         <div style="margin-bottom: 10px;">
@@ -865,6 +870,7 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
             </p>
             
             <form action="app/submit-task-review.php" method="POST" enctype="multipart/form-data">
+                <?= csrf_field('submit_task_review_form') ?>
                 <input type="hidden" name="task_id" id="modal_task_id">
                  <div style="margin-bottom: 15px;">
                     <label style="display: block; font-size: 13px; font-weight: 500; color: #374151; margin-bottom: 5px;">Attach New File (Optional) <span style="font-size: 11px; color: #6B7280; font-weight: normal;">(up to 100MB)</span></label>
@@ -896,6 +902,7 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
              </div>
 
              <form action="app/resubmit-task.php" method="POST" enctype="multipart/form-data">
+                <?= csrf_field('resubmit_task_form') ?>
                 <input type="hidden" name="task_id" id="resubmit_task_id">
                 
                 <div style="margin-bottom: 15px;">

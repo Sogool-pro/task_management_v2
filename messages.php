@@ -2,10 +2,12 @@
 session_start();
 if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
     include "DB_connection.php";
+    require_once "inc/csrf.php";
     include "app/model/user.php";
     include "app/model/Message.php";
     include "app/model/Group.php";
     include "app/model/GroupMessage.php";
+    $chatAjaxCsrfToken = csrf_token('chat_ajax_actions');
     
     // Fetch users for the chat list
     // Fetch users for the chat list
@@ -247,6 +249,7 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
             var currentChatType = "user"; // user | group
             var loadInterval;
             var selectedFiles = []; // Array to store multiple files
+            var chatAjaxCsrfToken = <?= json_encode($chatAjaxCsrfToken, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
 
             // Search Filter
              $("#searchText").on("input", function(){
@@ -542,6 +545,7 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
 
                 var formData = new FormData();
                 formData.append("message", message);
+                formData.append("csrf_token", chatAjaxCsrfToken);
                 if (currentChatType === "group") {
                     formData.append("group_id", currentGroupId);
                 } else {
@@ -575,6 +579,7 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
 
                  var endpoint = currentChatType === "group" ? "app/ajax/getGroupMessage.php" : "app/ajax/getMessage.php";
                  var payload = currentChatType === "group" ? { group_id: currentGroupId } : { id_2: currentChatUserId };
+                 payload.csrf_token = chatAjaxCsrfToken;
 
                  $.post(endpoint, payload, function(data, status){
                     var chatBox = $("#chatBox");

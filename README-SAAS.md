@@ -226,17 +226,74 @@ Implemented in:
 - `app/accept-invite.php`
 - `workspace-billing.php`
 - `app/update-workspace-seat-limit.php`
+- `create_task.php`
+- `app/add-task.php`
+- `groups.php`
+- `app/add-group.php`
+- `app/delete-group.php`
+- `tasks.php`
+- `tasks_upstream.php`
+- `app/admin-review-task.php`
+- `app/delete-task.php`
+- `edit-task-employee.php`
+- `app/update-task-employee.php`
+- `my_task.php`
+- `app/add-subtask.php`
+- `app/review-subtask.php`
+- `app/update-subtask-submission.php`
+- `app/submit-task-review.php`
+- `app/resubmit-task.php`
+- `app/rate-leader.php`
+- `edit_profile.php`
+- `app/update-profile.php`
+- `edit-user.php`
+- `app/update-user.php`
+- `user.php`
+- `app/update-user-role.php`
+- `login.php`
+- `app/login.php`
+- `signup.php`
+- `app/signup.php`
+- `forgot-password.php`
+- `app/req-reset-password.php`
+- `reset-password.php`
+- `app/do-reset-password.php`
+- `admin_clock_out.php`
+- `messages.php`
+- `app/ajax/insert.php`
+- `app/ajax/insertGroupMessage.php`
+- `app/ajax/getMessage.php`
+- `app/ajax/getGroupMessage.php`
+- `index.php`
+- `time_in.php`
+- `time_out.php`
+- `capture.html`
+- `save_screenshot.php`
+- `app/notification.php`
+- `app/notification-read.php`
 
 Behavior now:
 
 1. Sensitive forms now include a hidden CSRF token tied to user session.
 2. Token is verified server-side before action is allowed.
 3. Invalid/expired token requests are blocked safely.
-4. Protected actions in this phase:
-   - send invite
-   - revoke invite
-   - accept invite (join workspace)
-   - update seat limit
+4. Protected actions now include:
+   - invite send/revoke/accept
+   - manual seat update
+   - task create/delete/review
+   - group create/delete
+   - subtask create/review/submission
+   - task submission/resubmission
+   - leader rating submission
+   - profile and user update forms
+   - role update form
+   - login, signup, forgot-password, and reset-password forms
+   - admin clock-out AJAX action
+   - chat message send + read-marking AJAX actions
+   - employee time-in/time-out AJAX actions
+   - screenshot upload from the capture window
+   - notification read/redirect action
+5. Repeating AJAX flows (polling/capture) use a non-consuming CSRF validation mode so normal real-time behavior is preserved.
 
 Why this matters (simple):
 
@@ -461,13 +518,13 @@ Task rating display correction:
 2. One account is effectively tied to one workspace context at login.
 3. No full billing provider integration yet (subscription table is currently manual/foundation).
 4. Seat limits are enforced for invite send and invite acceptance, but should still be reviewed for any future user-creation paths.
-5. CSRF protection is now applied to invite/join/seat-update flows; remaining POST endpoints should also be covered.
+5. CSRF protection now covers major write flows (invite, billing, tasks, groups, subtasks, profile/user updates, auth/reset, admin clock-out, chat AJAX, attendance/capture AJAX, and notification-read action); keep applying it for any new POST/AJAX write endpoint you add.
 6. No organization switcher UI for users who belong to multiple workspaces.
 
 ## 11. Recommended next milestones
 
 1. Add Stripe/Paddle billing integration using `subscriptions`.
-2. Roll out CSRF protection to all remaining sensitive POST actions (tasks, groups, profile/account changes).
+2. Add automated security regression tests (tenant scope + CSRF on write endpoints).
 3. Add audit logs table for security/compliance.
 4. Add automated tenant-leak regression tests.
 5. Add dedicated super-admin control panel with strong access controls.
@@ -489,7 +546,8 @@ Task rating display correction:
 
 `Issue`: Invalid or expired request (CSRF)  
 `Check`: form was submitted from stale tab/session or token missing  
-`Fix`: refresh page, then submit again from the app form directly
+`Fix`: refresh page, then submit again from the app form directly  
+`Where`: invite, billing, tasks, groups, subtasks, profile/user updates, auth/reset, admin clock-out, messages/chat send+read actions, attendance/capture actions, and notification-read action
 
 `Issue`: Error `workspace_invites table is missing`  
 `Check`: Invite migration not run  

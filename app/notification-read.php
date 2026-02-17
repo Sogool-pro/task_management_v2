@@ -2,7 +2,14 @@
 session_start();
 if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
     include "../DB_connection.php";
+    require_once "../inc/csrf.php";
     include "model/Notification.php";
+
+    if (!csrf_verify('notification_read_action', $_GET['csrf_token'] ?? null, false)) {
+       $em = urlencode("Invalid or expired request");
+       header("Location: ../notifications.php?error=$em");
+       exit();
+    }
 
    if (isset($_GET['notification_id'])) {
        $notification_id = $_GET['notification_id'];

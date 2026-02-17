@@ -3,6 +3,7 @@ session_start();
 if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
     include "DB_connection.php";
     include "app/model/user.php";
+    require_once "inc/csrf.php";
     $user = get_user_by_id($pdo, $_SESSION['id']);
     
  ?>
@@ -28,6 +29,7 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
     <div class="dash-main">
         
         <form action="app/update-profile.php" method="POST" enctype="multipart/form-data">
+            <?= csrf_field('update_profile_form') ?>
             
             <div class="dash-card" style="padding: 0; overflow: visible; margin: 0;">
                 <div class="profile-banner"></div>

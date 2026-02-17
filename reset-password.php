@@ -1,3 +1,6 @@
+<?php
+require_once "inc/csrf.php";
+?>
 <!DOCTYPE html>
 <html>
 <head>
@@ -31,6 +34,7 @@
                  $token = $_GET['token'];
             ?>
             <form method="POST" action="app/do-reset-password.php">
+                <?= csrf_field('do_reset_password_form') ?>
                 <input type="hidden" name="token" value="<?= htmlspecialchars($token) ?>">
                 
                 <div class="form-group">

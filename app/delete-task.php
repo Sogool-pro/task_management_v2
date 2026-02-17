@@ -4,6 +4,7 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] == "
 
 	if (isset($_POST['id'])) {
 		include "../DB_connection.php";
+        require_once "../inc/csrf.php";
         include "model/Task.php";
         include "model/Group.php";
 
@@ -12,6 +13,12 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] == "
             $data = stripslashes($data);
             $data = htmlspecialchars($data);
             return $data;
+        }
+
+        if (!csrf_verify('delete_task_form', $_POST['csrf_token'] ?? null, true)) {
+            $em = "Invalid or expired request. Please refresh and try again.";
+            header("Location: ../tasks.php?error=" . urlencode($em));
+            exit();
         }
 
         $id = validate_input($_POST['id']);

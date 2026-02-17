@@ -37,6 +37,7 @@
         let attendanceId = null;
         let sessionId = null;
         let userId = null;
+        let csrfToken = null;
         let currentStream = null;
         let attendanceCheckInterval = null;
         // Robust relative URL
@@ -47,6 +48,7 @@
         attendanceId = params.get('attendanceId');
         userId = params.get('userId');
         sessionId = params.get('sessionId');
+        csrfToken = params.get('csrf_token');
 
         const statusDiv = document.getElementById('status');
 
@@ -186,6 +188,7 @@
                 formData.append('attendance_id', attendanceId);
                 formData.append('session_id', sessionId);
                 formData.append('image', dataUrl);
+                formData.append('csrf_token', csrfToken || '');
 
                 statusDiv.innerText = "Uploading...";
 

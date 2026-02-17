@@ -4,6 +4,7 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] == "
     include "DB_connection.php";
     include "app/model/user.php";
     include "app/model/Group.php";
+    require_once "inc/csrf.php";
 
     $users = get_all_users($pdo, 'employee');
     $groups = get_all_groups($pdo);
@@ -392,6 +393,7 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] == "
                 </div>
 
                 <form action="app/add-group.php" method="POST">
+                    <?= csrf_field('add_group_form') ?>
                     <div class="form-group">
                         <label class="form-label">Group Name</label>
                         <input type="text" name="group_name" class="form-control" placeholder="Enter group name" required>
@@ -591,6 +593,7 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] == "
                                     <div class="created-at">Created <?= $createdAt ?></div>
                                     <div style="display: flex; gap: 10px;">
                                         <form action="app/delete-group.php" method="POST" style="display:inline;" onsubmit="return confirm('Delete this group?');">
+                                            <?= csrf_field('delete_group_form') ?>
                                             <input type="hidden" name="id" value="<?=$group['id']?>">
                                             <button type="submit" class="action-icon delete" title="Delete"><i class="fa fa-trash-o"></i></button>
                                         </form>

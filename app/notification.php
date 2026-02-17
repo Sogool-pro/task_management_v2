@@ -2,8 +2,10 @@
 session_start();
 if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
     include "../DB_connection.php";
+    require_once "../inc/csrf.php";
     include "model/Notification.php";
     include "model/Task.php";
+    $notificationReadCsrfToken = csrf_token('notification_read_action');
 
     $notifications = get_all_my_notifications($pdo, $_SESSION['id']);
     $user_role = $_SESSION['role'];
@@ -41,7 +43,7 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
         $task_id = get_notification_task_id($pdo, $notification);
  ?>
     <li>
-    <a href="app/notification-read.php?notification_id=<?=$notification['id']?><?=$task_id ? '&task_id=' . $task_id : ''?>">
+    <a href="app/notification-read.php?notification_id=<?=$notification['id']?><?=$task_id ? '&task_id=' . $task_id : ''?>&csrf_token=<?=urlencode($notificationReadCsrfToken)?>">
         
         <?php if ($notification['is_read'] == 0) {
             echo "<mark>".$notification['type']."</mark>: ";

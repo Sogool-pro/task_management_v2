@@ -1,3 +1,6 @@
+<?php
+require_once "inc/csrf.php";
+?>
 <!DOCTYPE html>
 <html>
 <head>
@@ -77,6 +80,7 @@
                 <?php } ?>
 
                 <form method="POST" action="app/login.php">
+                    <?= csrf_field('login_form') ?>
                     
                     <?php if (isset($_GET['first_time'])) { ?>
                         <div class="auth-info-box">

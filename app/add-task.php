@@ -4,6 +4,7 @@ session_start();
 if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
     if (isset($_POST['title']) && isset($_POST['description']) && $_SESSION['role'] == 'admin' && isset($_POST['due_date'])) {
         include "../DB_connection.php";
+        require_once "../inc/csrf.php";
 
         function validate_input($data)
         {
@@ -11,6 +12,12 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
             $data = stripslashes($data);
             $data = htmlspecialchars($data);
             return $data;
+        }
+
+        if (!csrf_verify('create_task_form', $_POST['csrf_token'] ?? null, true)) {
+            $em = "Invalid or expired request. Please refresh and try again.";
+            header("Location: ../create_task.php?error=" . urlencode($em));
+            exit();
         }
 
         $title = validate_input($_POST['title']);

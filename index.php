@@ -7,6 +7,7 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
     include "app/model/user.php";
     include "app/model/Subtask.php";
     include "app/model/Group.php";
+    require_once "inc/csrf.php";
 
     // --- DATA FETCHING FOR DASHBOARD ---
     
@@ -65,6 +66,8 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
          $stmt_recent->execute($params_recent);
          $recent_tasks = $stmt_recent->fetchAll(PDO::FETCH_ASSOC);
     }
+
+    $attendanceAjaxCsrfToken = csrf_token('attendance_ajax_actions');
 ?>
 <!DOCTYPE html>
 <html>
@@ -772,6 +775,7 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
     // Store user ID from PHP session
     var currentUserId = <?= isset($_SESSION['id']) ? $_SESSION['id'] : 'null' ?>;
     var isEmployeeUser = <?= (isset($_SESSION['role']) && $_SESSION['role'] !== 'admin') ? 'true' : 'false' ?>;
+    var attendanceAjaxCsrfToken = <?= json_encode($attendanceAjaxCsrfToken, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
 
     const btnIn = document.getElementById('btnTimeIn');
     const btnOut = document.getElementById('btnTimeOut');
@@ -856,7 +860,7 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
         isAutoClockOutInProgress = true;
         if (statusSpan) statusSpan.textContent = 'Clocking out...';
 
-        ajax('time_out.php', '', function (res) {
+        ajax('time_out.php', 'csrf_token=' + encodeURIComponent(attendanceAjaxCsrfToken), function (res) {
             attendanceId = null;
             var autoMessage = (res && res.status === 'success') ? fallbackMessage : message;
             setClockedOutUI();
@@ -878,7 +882,7 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
             statusSpan.textContent = 'Clocking in...';
             statusSpan.style.color = ''; // Reset color
             
-            ajax('time_in.php', '', function (res) {
+            ajax('time_in.php', 'csrf_token=' + encodeURIComponent(attendanceAjaxCsrfToken), function (res) {
                 if (res.status === 'success') {
                     attendanceId = res.attendance_id || null;
                     hasActiveAttendance = true;
@@ -899,7 +903,7 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
                     const top = screen.height - height;
                     
                     captureWindow = window.open(
-                        'capture.html?attendanceId=' + attendanceId + '&userId=' + currentUserId,
+                        'capture.html?attendanceId=' + encodeURIComponent(attendanceId) + '&userId=' + encodeURIComponent(currentUserId) + '&csrf_token=' + encodeURIComponent(attendanceAjaxCsrfToken),
                         'TaskFlowCapture',
                         'width=' + width + ',height=' + height + ',left=' + left + ',top=' + top
                     );
@@ -937,7 +941,7 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
         }
         
         // Then record time out
-        ajax('time_out.php', '', function (res) {
+        ajax('time_out.php', 'csrf_token=' + encodeURIComponent(attendanceAjaxCsrfToken), function (res) {
             if (res.status === 'success') {
                 statusSpan.textContent = 'Timed out. Session ended.';
                 attendanceId = null;

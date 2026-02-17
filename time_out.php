@@ -5,9 +5,20 @@ header('Content-Type: application/json');
 
 require 'DB_connection.php';
 require_once 'inc/tenant.php';
+require_once 'inc/csrf.php';
+
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    echo json_encode(['status' => 'error', 'message' => 'Invalid request method']);
+    exit;
+}
 
 if (!isset($_SESSION['id']) || $_SESSION['role'] !== 'employee') {
     echo json_encode(['status' => 'error', 'message' => 'Unauthorized']);
+    exit;
+}
+
+if (!csrf_verify('attendance_ajax_actions', $_POST['csrf_token'] ?? null, false)) {
+    echo json_encode(['status' => 'error', 'message' => 'Invalid or expired request']);
     exit;
 }
 

@@ -13,12 +13,18 @@ if (!isset($_POST['id'])) {
 
 require_once "../DB_connection.php";
 require_once "../inc/tenant.php";
+require_once "../inc/csrf.php";
 require_once "model/Task.php";
 require_once "model/Notification.php";
 require_once "model/user.php";
 
 function clean($data) {
     return htmlspecialchars(stripslashes(trim($data)));
+}
+
+if (!csrf_verify('update_task_employee_form', $_POST['csrf_token'] ?? null, true)) {
+    header("Location: ../edit-task-employee.php?error=" . urlencode("Invalid or expired request. Please refresh and try again."));
+    exit();
 }
 
 $id = clean($_POST['id']);
