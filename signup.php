@@ -1,3 +1,6 @@
+<?php
+require_once "inc/csrf.php";
+?>
 <!DOCTYPE html>
 <html>
 <head>
@@ -76,6 +79,7 @@
                 </div>
 
                 <form method="POST" action="app/signup.php">
+                    <?= csrf_field('signup_form') ?>
                     <div class="form-group">
                         <label class="form-label">Workspace Name</label>
                         <input type="text" class="form-control" name="organization_name" placeholder="Acme Team" required>

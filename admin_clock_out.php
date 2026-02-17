@@ -5,6 +5,7 @@ header('Content-Type: application/json');
 
 require 'DB_connection.php';
 require_once 'inc/tenant.php';
+require_once 'inc/csrf.php';
 
 // Only allow admins
 if (!isset($_SESSION['id']) || $_SESSION['role'] !== 'admin') {
@@ -14,6 +15,11 @@ if (!isset($_SESSION['id']) || $_SESSION['role'] !== 'admin') {
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     echo json_encode(['status' => 'error', 'message' => 'Invalid request method']);
+    exit;
+}
+
+if (!csrf_verify('admin_clock_out_action', $_POST['csrf_token'] ?? null, false)) {
+    echo json_encode(['status' => 'error', 'message' => 'Invalid or expired request']);
     exit;
 }
 

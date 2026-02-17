@@ -20,6 +20,7 @@ if (!isset($_POST['task_id']) || !isset($_POST['rating'])) {
 }
 
 include "../DB_connection.php";
+require_once "../inc/csrf.php";
 include "model/LeaderFeedback.php";
 
 function validate_input($data)
@@ -28,6 +29,12 @@ function validate_input($data)
     $data = stripslashes($data);
     $data = htmlspecialchars($data);
     return $data;
+}
+
+if (!csrf_verify('rate_leader_form', $_POST['csrf_token'] ?? null, true)) {
+    $em = "Invalid or expired request. Please refresh and try again.";
+    header("Location: ../my_task.php?error=" . urlencode($em));
+    exit();
 }
 
 $task_id = (int)validate_input($_POST['task_id']);

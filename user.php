@@ -5,6 +5,7 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] == "
     include "app/Model/User.php";
     include "app/Model/Task.php";
     include "app/Model/Subtask.php";
+    require_once "inc/csrf.php";
     
     $is_super_admin = is_super_admin($_SESSION['id'], $pdo);
 
@@ -527,6 +528,7 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] == "
             </p>
             
             <form action="app/update-user-role.php" method="POST">
+                <?= csrf_field('update_user_role_form') ?>
                 <input type="hidden" name="user_id" id="modalUserId">
                 <div style="margin-bottom: 15px;">
                     <label style="display: block; font-size: 13px; font-weight: 500; color: #374151; margin-bottom: 6px;">Select New Role</label>
@@ -551,6 +553,8 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] == "
     </div>
 
     <script>
+        const ADMIN_CLOCK_OUT_CSRF = <?= json_encode(csrf_token('admin_clock_out_action')) ?>;
+
         (function() {
             var pendingBtn = null;
             var confirmModal = document.getElementById('adminConfirmModal');
@@ -586,6 +590,7 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] == "
 
                 var body = new URLSearchParams();
                 body.append('user_id', userId);
+                body.append('csrf_token', ADMIN_CLOCK_OUT_CSRF);
 
                 fetch('admin_clock_out.php', {
                     method: 'POST',

@@ -130,6 +130,39 @@ Do this:
    - `join-workspace.php?token=...`
    - `workspace-billing.php`
 
+### 4.3.2 "Invalid or expired request" appears on task/group/profile/user actions
+
+This is also CSRF protection and is expected when a stale page submits old tokens.
+
+Do this:
+
+1. Refresh the affected page first.
+2. Re-run the action from current UI state (do not use old tab history).
+3. Re-login if session timed out.
+4. Retry endpoint flow from the proper page:
+   - Tasks: `tasks.php`, `my_task.php`, `edit-task-employee.php`, `create_task.php`
+   - Groups: `groups.php`
+   - Profile/User: `edit_profile.php`, `edit-user.php`, `user.php`
+   - Messages: `messages.php`
+   - Attendance/Capture: `index.php`, `capture.html`
+   - Notifications: header bell -> `app/notification-read.php`
+
+### 4.3.3 "Message send/load or time-in/time-out suddenly fails after security hardening"
+
+Possible cause:
+
+1. CSRF token missing from AJAX call (client-side script mismatch or stale file cache).
+
+Do this:
+
+1. Hard refresh browser (Ctrl+F5) and retry.
+2. Confirm the user has an active login session.
+3. Check browser Network tab and verify request payload includes `csrf_token`.
+4. Verify affected endpoint path:
+   - Messages: `app/ajax/insert.php`, `app/ajax/insertGroupMessage.php`, `app/ajax/getMessage.php`, `app/ajax/getGroupMessage.php`
+   - Attendance: `time_in.php`, `time_out.php`
+   - Capture upload: `save_screenshot.php`
+
 ### 4.4 "User sees data from another workspace"
 
 Treat as a security bug.

@@ -5,6 +5,7 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] == "
     include "app/model/user.php";
     include "app/model/Task.php";
     include "app/model/Group.php";
+    require_once "inc/csrf.php";
 
     // Only get employees (exclude admin)
     $users = get_all_users($pdo, 'employee');
@@ -232,6 +233,7 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] == "
             </div>
             
             <form action="app/add-task.php" method="POST" enctype="multipart/form-data" style="padding: 24px;">
+                <?= csrf_field('create_task_form') ?>
                 
                 <?php if (isset($_GET['error'])) {?>
                     <div style="background: #FEF2F2; color: #991B1B; padding: 10px; border-radius: 6px; margin-bottom: 20px; font-size: 14px;">

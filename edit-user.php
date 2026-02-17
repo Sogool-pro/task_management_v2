@@ -3,6 +3,7 @@ session_start();
 if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] == "admin") {
     include "DB_connection.php";
     include "app/model/user.php";
+    require_once "inc/csrf.php";
     
     if (!isset($_GET['id'])) {
     	 header("Location: user.php");
@@ -42,6 +43,7 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] == "
 			<form class="form-1"
 			      method="POST"
 			      action="app/update-user.php">
+                  <?= csrf_field('update_user_form') ?>
 			      <?php if (isset($_GET['error'])) {?>
       	  	<div class="danger" role="alert">
 			  <?php echo stripcslashes($_GET['error']); ?>

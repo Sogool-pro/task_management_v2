@@ -1,5 +1,6 @@
 <?php
 session_start();
+header('Content-Type: application/json');
 
 if (!isset($_SESSION['id'])) {
     http_response_code(403);
@@ -9,6 +10,19 @@ if (!isset($_SESSION['id'])) {
 
 require 'DB_connection.php';
 require_once 'inc/tenant.php';
+require_once 'inc/csrf.php';
+
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    http_response_code(405);
+    echo json_encode(['status' => 'error', 'message' => 'Invalid request method']);
+    exit;
+}
+
+if (!csrf_verify('attendance_ajax_actions', $_POST['csrf_token'] ?? null, false)) {
+    http_response_code(403);
+    echo json_encode(['status' => 'error', 'message' => 'Invalid or expired request']);
+    exit;
+}
 
 $user_id = $_SESSION['id'];
 $organization_id = tenant_get_current_org_id();

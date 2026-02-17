@@ -101,7 +101,8 @@ If email fails, check:
 3. Never commit database dumps with real user data.
 4. Keep `APP_ENV=production` in live environments.
 5. Keep `ALLOW_MAINTENANCE_SCRIPTS=0` in live environments.
-6. Keep users on normal in-app forms (invite/join/billing actions are CSRF-protected now).
+6. Keep users on normal in-app UI actions (forms and AJAX endpoints now rely on session CSRF tokens).
+7. CSRF is now enabled for major write flows (tasks, groups, subtasks, profile/user updates, auth/reset, admin clock-out, chat AJAX, attendance/capture AJAX, and notification-read action).
 
 ## 8. Quick go-live test
 
@@ -113,6 +114,12 @@ If email fails, check:
 6. Screenshots/uploads are being saved correctly.
 7. Invite flow works (send invite, accept invite, revoke invite).
 8. Billing seat update form works.
-9. Submitting old/stale invite or billing form shows safe `Invalid or expired request` and does not perform the action.
+9. Task/group/subtask write actions still work from normal UI (create/review/delete/submit/resubmit/rate).
+10. Profile and user role update forms still work.
+11. Admin clock-out button works from `user.php`.
+12. Submitting old/stale forms shows safe `Invalid or expired request` and does not perform the action.
+13. Messages still send/load in `messages.php` (direct and group chat).
+14. Employee time-in/time-out still works from dashboard, and capture uploads still work.
+15. Clicking a notification marks it read and redirects correctly.
 
 If all checks pass, your deployment is in good shape.

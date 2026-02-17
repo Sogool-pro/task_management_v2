@@ -5,6 +5,7 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
 if (isset($_POST['user_name']) && isset($_POST['password']) && isset($_POST['full_name']) && $_SESSION['role'] == 'admin') {
 	include "../DB_connection.php";
     require_once "../inc/tenant.php";
+    require_once "../inc/csrf.php";
 
     function validate_input($data) {
 	  $data = trim($data);
@@ -12,6 +13,12 @@ if (isset($_POST['user_name']) && isset($_POST['password']) && isset($_POST['ful
 	  $data = htmlspecialchars($data);
 	  return $data;
 	}
+
+    if (!csrf_verify('update_user_form', $_POST['csrf_token'] ?? null, true)) {
+        $em = "Invalid or expired request. Please refresh and try again.";
+        header("Location: ../edit-user.php?error=" . urlencode($em));
+        exit();
+    }
 
 	$user_name = validate_input($_POST['user_name']);
 	$password = validate_input($_POST['password']);

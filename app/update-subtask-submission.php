@@ -4,6 +4,7 @@ if ((isset($_SESSION['role']) && $_SESSION['role'] == "employee") || (isset($_SE
     
     if (isset($_POST['id']) && isset($_FILES['submission_file'])) {
         require_once "../DB_connection.php";
+        require_once "../inc/csrf.php";
         require_once "model/Subtask.php";
         require_once "model/Notification.php";
         require_once "model/Task.php"; // Include this at the top
@@ -13,6 +14,12 @@ if ((isset($_SESSION['role']) && $_SESSION['role'] == "employee") || (isset($_SE
             $data = stripslashes($data);
             $data = htmlspecialchars($data);
             return $data;
+        }
+
+        if (!csrf_verify('update_subtask_submission_form', $_POST['csrf_token'] ?? null, true)) {
+            $em = "Invalid or expired request. Please refresh and try again.";
+            header("Location: ../my_task.php?error=" . urlencode($em));
+            exit();
         }
 
         $id = validate_input($_POST['id']);

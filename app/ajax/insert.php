@@ -1,8 +1,19 @@
 <?php 
 
 session_start();
+require_once "../../inc/csrf.php";
+
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    http_response_code(405);
+    exit;
+}
 
 if (isset($_SESSION['id'])) {
+
+    if (!csrf_verify('chat_ajax_actions', $_POST['csrf_token'] ?? null, false)) {
+        http_response_code(403);
+        exit;
+    }
 
 	if (isset($_POST['message']) && isset($_POST['to_id'])) {
 	

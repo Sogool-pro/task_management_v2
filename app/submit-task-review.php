@@ -5,6 +5,7 @@ if ((isset($_SESSION['role']) && $_SESSION['role'] == "employee") || (isset($_SE
     if (isset($_POST['task_id'])) {
         include "../DB_connection.php";
         require_once "../inc/tenant.php";
+        require_once "../inc/csrf.php";
         include "model/Notification.php";
         include "model/Task.php";
 
@@ -13,6 +14,12 @@ if ((isset($_SESSION['role']) && $_SESSION['role'] == "employee") || (isset($_SE
             $data = stripslashes($data);
             $data = htmlspecialchars($data);
             return $data;
+        }
+
+        if (!csrf_verify('submit_task_review_form', $_POST['csrf_token'] ?? null, true)) {
+            $em = "Invalid or expired request. Please refresh and try again.";
+            header("Location: ../my_task.php?error=" . urlencode($em));
+            exit();
         }
 
         $task_id = validate_input($_POST['task_id']);

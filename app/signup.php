@@ -2,9 +2,15 @@
 session_start();
 include "../DB_connection.php";
 require_once "../inc/tenant.php";
+require_once "../inc/csrf.php";
 
 if (!isset($_POST['user_name']) || !isset($_POST['full_name'])) {
     header("Location: ../signup.php?error=error");
+    exit();
+}
+
+if (!csrf_verify('signup_form', $_POST['csrf_token'] ?? null, true)) {
+    header("Location: ../signup.php?error=" . urlencode("Invalid or expired request. Please refresh and try again."));
     exit();
 }
 

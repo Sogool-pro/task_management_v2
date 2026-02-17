@@ -110,12 +110,18 @@ For day-to-day support handling, use `README-SUPPORT-CHEATSHEET.md`.
 
 ## 11. New CSRF security behavior (important)
 
-Sensitive SaaS forms are now CSRF-protected:
+Sensitive SaaS forms/actions are now CSRF-protected:
 
-1. Send invite (`invite-user.php`)
-2. Revoke invite (`invite-user.php` -> `app/cancel-invite.php`)
-3. Accept invite/join workspace (`join-workspace.php` -> `app/accept-invite.php`)
-4. Update seat limit (`workspace-billing.php` -> `app/update-workspace-seat-limit.php`)
+1. Invite flow (`invite-user.php`, `join-workspace.php`, related `app/*` endpoints)
+2. Billing seat update (`workspace-billing.php` -> `app/update-workspace-seat-limit.php`)
+3. Task/group admin actions (create, review, delete)
+4. Subtask/member actions (create, review, submit, resubmit, rate leader)
+5. Profile/user management actions (profile update, user update, role update)
+6. Auth/recovery forms (login, signup, forgot password, reset password)
+7. Admin clock-out AJAX action (`user.php` -> `admin_clock_out.php`)
+8. Chat AJAX actions (`messages.php` -> `app/ajax/*` send/read endpoints)
+9. Attendance/capture AJAX actions (`index.php`/`capture.html` -> `time_in.php`, `time_out.php`, `save_screenshot.php`)
+10. Notification read action (`app/notification.php` -> `app/notification-read.php`)
 
 If you see `Invalid or expired request`:
 
