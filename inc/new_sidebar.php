@@ -172,6 +172,12 @@
             confirmBtn.addEventListener('click', function () {
                 try {
                     localStorage.setItem('taskflow_force_stop_capture', String(Date.now()));
+                    for (var i = sessionStorage.length - 1; i >= 0; i--) {
+                        var key = sessionStorage.key(i);
+                        if (key && key.indexOf('taskflow_nav_clockin_warned_once_user_') === 0) {
+                            sessionStorage.removeItem(key);
+                        }
+                    }
                 } catch (e) {}
                 window.location.href = pendingHref;
             });
@@ -183,3 +189,5 @@
         }
     })();
 </script>
+
+<?php include_once __DIR__ . "/toast.php"; ?>

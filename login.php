@@ -11,9 +11,46 @@
     <!-- Icons -->
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
 	<link rel="stylesheet" href="css/auth.css">
+    <style>
+        .login-back-link-fixed {
+            position: fixed;
+            top: 18px;
+            left: 18px;
+            z-index: 1000;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: #4B5563;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid #E5E7EB;
+            border-radius: 10px;
+            padding: 8px 12px;
+            backdrop-filter: blur(2px);
+        }
+        .login-back-link-fixed:hover {
+            color: #111827;
+            border-color: #D1D5DB;
+        }
+        @media (max-width: 768px) {
+            .login-back-link-fixed {
+                top: 10px;
+                left: 10px;
+                font-size: 13px;
+                padding: 7px 10px;
+            }
+        }
+    </style>
 </head>
 <body class="auth-body">
-      
+      <?php include "inc/toast.php"; ?>
+
+      <a href="landing.php" class="login-back-link-fixed">
+          <i class="fa fa-arrow-left"></i> Back to Landing
+      </a>
+
       <div class="auth-container">
             <!-- Left Side: Branding -->
             <div class="auth-left">

@@ -1,5 +1,17 @@
 # Task Management V2
 
+## User Guide
+
+For end-user/subscriber flow documentation, read:
+
+- `README-USER-GUIDE.md`
+
+## Latest Update Compilation
+
+For a compiled summary of updates completed today, read:
+
+- `README-UPDATE-COMPILATION-2026-02-17.md`
+
 ## How to Merge Upstream Changes (Safe Method)
 
 If you have forked this repository and want to pull the latest changes from the original (upstream) repo without breaking your local setup, follow these steps to do a "test run" first.

@@ -781,6 +781,26 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
     let hasActiveAttendance = false;
     let isAutoClockOutInProgress = false;
     let isManualClockOutInProgress = false;
+    const idleCheckThresholdMs = 100000; // 100 seconds
+    let idleCheckTimer = null;
+    let isIdleCheckModalOpen = false;
+    const clockInNavWarningKey = 'taskflow_nav_clockin_warned_once_user_' + String(currentUserId || 'guest');
+    let hasSeenClockInNavWarning = false;
+    let pendingNavTarget = null;
+    try {
+        hasSeenClockInNavWarning = sessionStorage.getItem(clockInNavWarningKey) === '1';
+    } catch (e) {
+        hasSeenClockInNavWarning = false;
+    }
+
+    function markClockInNavWarningSeen() {
+        hasSeenClockInNavWarning = true;
+        try {
+            sessionStorage.setItem(clockInNavWarningKey, '1');
+        } catch (e) {
+            // no-op
+        }
+    }
 
     // Toggle button visibility based on state
     function updateButtonState(isTimedIn) {
@@ -989,6 +1009,53 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
         }
     }
 
+    function startIdleCheckTimer() {
+        if (idleCheckTimer) {
+            clearTimeout(idleCheckTimer);
+        }
+        idleCheckTimer = setTimeout(function () {
+            openIdleCheckModal();
+        }, idleCheckThresholdMs);
+    }
+
+    function openIdleCheckModal() {
+        const modal = document.getElementById('idleCheckModal');
+        if (!modal || isIdleCheckModalOpen) return;
+        isIdleCheckModalOpen = true;
+        modal.style.display = 'flex';
+    }
+
+    function closeIdleCheckModal() {
+        const modal = document.getElementById('idleCheckModal');
+        if (modal) modal.style.display = 'none';
+        isIdleCheckModalOpen = false;
+        startIdleCheckTimer();
+    }
+
+    function onDashboardUserActivity() {
+        if (isIdleCheckModalOpen) return;
+        startIdleCheckTimer();
+    }
+
+    function setupIdleCheckPrompt() {
+        const activityEvents = ['mousemove', 'mousedown', 'keydown', 'scroll', 'touchstart'];
+        activityEvents.forEach(function (eventName) {
+            document.addEventListener(eventName, onDashboardUserActivity, true);
+        });
+
+        document.addEventListener('visibilitychange', function () {
+            if (document.hidden) {
+                if (idleCheckTimer) clearTimeout(idleCheckTimer);
+                return;
+            }
+            if (!isIdleCheckModalOpen) {
+                startIdleCheckTimer();
+            }
+        });
+
+        startIdleCheckTimer();
+    }
+
     // On page load, check for active attendance
     if (btnIn && btnOut) {
         ajax('check_attendance.php', '', function (res) {
@@ -1072,6 +1139,7 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
 
     function navigateWithClockInGuard(targetHref) {
         if (shouldAskClockInConfirmation(targetHref)) {
+            pendingNavTarget = targetHref || null;
             openNavClockInModal();
             return false;
         }
@@ -1082,6 +1150,7 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
     function shouldAskClockInConfirmation(targetHref) {
         if (!isEmployeeUser) return false;
         if (hasActiveAttendance) return false;
+        if (hasSeenClockInNavWarning) return false;
         if (!targetHref) return false;
         if (targetHref.startsWith('#') || targetHref.toLowerCase().startsWith('javascript:')) return false;
 
@@ -1095,12 +1164,22 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
 
     function openNavClockInModal() {
         const modal = document.getElementById('navClockInModal');
+        markClockInNavWarningSeen();
         if (modal) modal.style.display = 'flex';
     }
 
     function closeNavClockInModal() {
         const modal = document.getElementById('navClockInModal');
         if (modal) modal.style.display = 'none';
+    }
+
+    function continueNavAfterClockInWarning() {
+        const target = pendingNavTarget;
+        closeNavClockInModal();
+        pendingNavTarget = null;
+        if (target) {
+            window.location.href = target;
+        }
     }
 
     function openAutoClockOutModal(message) {
@@ -1122,10 +1201,13 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
             const href = link.getAttribute('href');
             if (shouldAskClockInConfirmation(href)) {
                 e.preventDefault();
+                pendingNavTarget = href || null;
                 openNavClockInModal();
             }
         }, true);
     }
+
+    setupIdleCheckPrompt();
 </script>
 <!-- Confirmation Modal -->
 <div id="confirmModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1001; align-items:center; justify-content:center;">
@@ -1154,8 +1236,9 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
         <p style="color:#6B7280; font-size:14px; margin-bottom:25px; line-height:1.5;">
             Are you sure you want to go to another page? You have not clocked in yet.
         </p>
-        <div style="display:flex; justify-content:center;">
-            <button onclick="closeNavClockInModal()" style="background:#4F46E5; color:white; border:none; padding:10px 24px; border-radius:8px; font-weight:600; cursor:pointer;">Dismiss</button>
+        <div style="display:flex; justify-content:center; gap:10px;">
+            <button onclick="closeNavClockInModal()" style="background:#F3F4F6; color:#374151; border:none; padding:10px 24px; border-radius:8px; font-weight:600; cursor:pointer;">Dismiss</button>
+            <button onclick="continueNavAfterClockInWarning()" style="background:#4F46E5; color:white; border:none; padding:10px 24px; border-radius:8px; font-weight:600; cursor:pointer;">Continue</button>
         </div>
     </div>
 </div>
@@ -1175,12 +1258,27 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
         </div>
     </div>
 </div>
+
+<!-- Idle Check Modal -->
+<div id="idleCheckModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1004; align-items:center; justify-content:center;">
+    <div style="background:white; padding:30px; border-radius:12px; width:370px; text-align:center; box-shadow:0 4px 20px rgba(0,0,0,0.15);">
+        <div style="width:50px; height:50px; background:#DBEAFE; color:#1D4ED8; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:20px; margin:0 auto 15px;">
+            <i class="fa fa-user-o"></i>
+        </div>
+        <h3 style="margin:0 0 10px; color:#111827;">Are you still there?</h3>
+        <p style="color:#6B7280; font-size:14px; margin-bottom:25px; line-height:1.5;">
+            You have been idle for 100 seconds on the dashboard.
+        </p>
+        <div style="display:flex; justify-content:center;">
+            <button onclick="closeIdleCheckModal()" style="background:#4F46E5; color:white; border:none; padding:10px 24px; border-radius:8px; font-weight:600; cursor:pointer;">I'm still here</button>
+        </div>
+    </div>
+</div>
 </body>
 </html>
 <?php 
 } else { 
-   $em = "First login";
-   header("Location: login.php?error=$em");
+   header("Location: landing.php");
    exit();
 }
 ?>

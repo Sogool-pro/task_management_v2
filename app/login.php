@@ -110,5 +110,6 @@ if (isset($user['must_change_password']) && $user['must_change_password']) {
     exit();
 }
 
+$_SESSION['toast_success'] = "Logged in successfully!";
 header("Location: ../index.php");
 exit();

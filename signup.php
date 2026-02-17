@@ -13,6 +13,7 @@
 	<link rel="stylesheet" href="css/auth.css">
 </head>
 <body class="auth-body">
+      <?php include "inc/toast.php"; ?>
       
       <div class="auth-container">
             <!-- Left Side: Branding -->

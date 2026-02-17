@@ -90,3 +90,5 @@
        }
    })();
 </script>
+
+<?php include_once __DIR__ . "/toast.php"; ?>
