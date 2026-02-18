@@ -121,5 +121,7 @@ If email fails, check:
 13. Messages still send/load in `messages.php` (direct and group chat).
 14. Employee time-in/time-out still works from dashboard, and capture uploads still work.
 15. Clicking a notification marks it read and redirects correctly.
+16. Bulk employee invite upload works from `invite-user.php` (xlsx/csv/pdf).
+17. One-time generated join link works and is consumed after first successful signup.
 
 If all checks pass, your deployment is in good shape.

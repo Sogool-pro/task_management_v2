@@ -52,7 +52,10 @@ Alternative for invites migration:
 ## 6. Add employees (proper SaaS flow)
 
 1. As workspace admin, open `invite-user.php`.
-2. Send invite to employee email.
+2. Choose one onboarding option:
+   - Single invite: enter one employee name/email and send.
+   - Bulk invite: upload `.xlsx`, `.csv`, or text-based `.pdf` with employee names/emails.
+   - One-time link: generate a single-use shareable join link.
 3. Employee opens invite link (`join-workspace.php?token=...`) and sets password.
 4. Employee is automatically attached to the correct workspace.
 
@@ -60,6 +63,7 @@ Important:
 
 - Invite sending and invite acceptance are blocked automatically if seat limit is reached.
 - Invite sending and invite acceptance are also blocked if subscription/trial is not active.
+- Bulk import skips existing users and active pending invites automatically.
 
 ## 7. Smoke test tenant isolation
 

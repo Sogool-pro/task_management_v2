@@ -95,20 +95,25 @@ Implemented in:
 
 - `invite-user.php`
 - `app/invite-user.php`
+- `app/invite-users-bulk.php`
+- `app/generate-invite-link.php`
 - `app/cancel-invite.php`
 - `join-workspace.php`
 - `app/accept-invite.php`
+- `app/invite_helpers.php`
+- `app/invite_bulk_parser.php`
 - `sql_create_workspace_invites.sql`
 - `run_migration_workspace_invites.php`
 - `app/send_email.php` (workspace invite email sender)
 
 Behavior now:
 
-1. Admin invites employee by email.
-2. Employee receives tokenized invite link.
-3. Employee opens `join-workspace.php?token=...`.
-4. Employee sets password and is created inside the correct workspace.
-5. Invite is marked accepted.
+1. Admin can invite employee by email (single invite).
+2. Admin can upload a bulk file (`.xlsx`, `.csv`, or text-based `.pdf`) with employee names/emails.
+3. Admin can generate a one-time shareable join link.
+4. Employee opens `join-workspace.php?token=...`.
+5. Employee sets password (and email when using one-time link) and is created inside the correct workspace.
+6. Invite/link token is marked accepted after successful join.
 
 ### 3.5 Direct add-user flow deprecated
 
@@ -319,8 +324,11 @@ Why this matters (simple):
 
 1. Admin logs in.
 2. Opens `invite-user.php`.
-3. Sends invite to employee email.
-4. Invite is stored in `workspace_invites` with token and expiry.
+3. Chooses one of:
+   - send single invite by email
+   - upload bulk employee file
+   - generate one-time shareable join link
+4. System stores tokenized records in `workspace_invites` with expiry.
 
 ## 4.3 Employee joins workspace
 
@@ -478,9 +486,13 @@ Invites/join flow:
 
 - `invite-user.php`
 - `app/invite-user.php`
+- `app/invite-users-bulk.php`
+- `app/generate-invite-link.php`
 - `app/cancel-invite.php`
 - `join-workspace.php`
 - `app/accept-invite.php`
+- `app/invite_helpers.php`
+- `app/invite_bulk_parser.php`
 - `sql_create_workspace_invites.sql`
 - `run_migration_workspace_invites.php`
 
@@ -543,6 +555,10 @@ Task rating display correction:
 `Issue`: Invite link says invalid or expired  
 `Check`: `workspace_invites.status` and `expires_at`  
 `Fix`: Resend invite from `invite-user.php`
+
+`Issue`: Bulk upload says no valid rows found  
+`Check`: file format and column headers  
+`Fix`: use `.xlsx` or `.csv` with columns like `Full Name` and `Email` (PDF parsing is best-effort for text-based PDFs)
 
 `Issue`: Invalid or expired request (CSRF)  
 `Check`: form was submitted from stale tab/session or token missing  

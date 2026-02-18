@@ -4,6 +4,7 @@ session_start();
 include "../DB_connection.php";
 require_once "../inc/tenant.php";
 require_once "../inc/csrf.php";
+require_once "invite_helpers.php";
 
 function validate_input($data)
 {
@@ -19,8 +20,10 @@ if (!isset($_POST['token']) || !isset($_POST['password']) || !isset($_POST['conf
 }
 
 $requestToken = trim((string)($_POST['token'] ?? ''));
+$submittedEmail = strtolower(validate_input($_POST['email'] ?? ''));
+$redirectEmailParam = $submittedEmail !== '' ? "&email=" . urlencode($submittedEmail) : "";
 if (!csrf_verify('accept_workspace_invite_form', $_POST['csrf_token'] ?? null, true)) {
-    header("Location: ../join-workspace.php?token=" . urlencode($requestToken) . "&error=" . urlencode("Invalid or expired request. Please try again."));
+    header("Location: ../join-workspace.php?token=" . urlencode($requestToken) . $redirectEmailParam . "&error=" . urlencode("Invalid or expired request. Please try again."));
     exit();
 }
 
@@ -35,22 +38,22 @@ if ($token === '') {
 }
 
 if ($fullName === '') {
-    header("Location: ../join-workspace.php?token=" . urlencode($token) . "&error=" . urlencode("Full name is required."));
+    header("Location: ../join-workspace.php?token=" . urlencode($token) . $redirectEmailParam . "&error=" . urlencode("Full name is required."));
     exit();
 }
 
 if ($password === '' || $confirmPassword === '') {
-    header("Location: ../join-workspace.php?token=" . urlencode($token) . "&error=" . urlencode("Password fields are required."));
+    header("Location: ../join-workspace.php?token=" . urlencode($token) . $redirectEmailParam . "&error=" . urlencode("Password fields are required."));
     exit();
 }
 
 if (strlen($password) < 8) {
-    header("Location: ../join-workspace.php?token=" . urlencode($token) . "&error=" . urlencode("Password must be at least 8 characters."));
+    header("Location: ../join-workspace.php?token=" . urlencode($token) . $redirectEmailParam . "&error=" . urlencode("Password must be at least 8 characters."));
     exit();
 }
 
 if ($password !== $confirmPassword) {
-    header("Location: ../join-workspace.php?token=" . urlencode($token) . "&error=" . urlencode("Passwords do not match."));
+    header("Location: ../join-workspace.php?token=" . urlencode($token) . $redirectEmailParam . "&error=" . urlencode("Passwords do not match."));
     exit();
 }
 
@@ -93,7 +96,15 @@ try {
         throw new RuntimeException("This workspace is currently unavailable.");
     }
 
+    $isOpenLink = invite_is_open_link_email((string)$invite['email']);
     $email = strtolower((string)$invite['email']);
+    if ($isOpenLink) {
+        if ($submittedEmail === '' || !filter_var($submittedEmail, FILTER_VALIDATE_EMAIL)) {
+            throw new RuntimeException("Valid work email is required.");
+        }
+        $email = $submittedEmail;
+    }
+
     $inviteRole = strtolower((string)($invite['role'] ?? 'employee'));
     $role = ($inviteRole === 'admin') ? 'admin' : 'employee';
 
@@ -139,10 +150,12 @@ try {
         "UPDATE workspace_invites
          SET status = 'accepted',
              accepted_at = NOW(),
-             accepted_user_id = ?
+             accepted_user_id = ?,
+             email = ?,
+             full_name = ?
          WHERE id = ?"
     );
-    $stmt->execute([$newUserId, (int)$invite['id']]);
+    $stmt->execute([$newUserId, $email, $fullName, (int)$invite['id']]);
 
     $pdo->commit();
 
@@ -154,6 +167,6 @@ try {
         $pdo->rollBack();
     }
     $err = $e->getMessage() ?: "Unable to accept invitation.";
-    header("Location: ../join-workspace.php?token=" . urlencode($token) . "&error=" . urlencode($err));
+    header("Location: ../join-workspace.php?token=" . urlencode($token) . $redirectEmailParam . "&error=" . urlencode($err));
     exit();
 }

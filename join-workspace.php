@@ -5,10 +5,12 @@ if (session_status() !== PHP_SESSION_ACTIVE) {
 include "DB_connection.php";
 require_once "inc/tenant.php";
 require_once "inc/csrf.php";
+require_once "app/invite_helpers.php";
 
 $token = trim((string)($_GET['token'] ?? ''));
 $invite = null;
 $inviteError = null;
+$prefillEmail = trim((string)($_GET['email'] ?? ''));
 
 if ($token === '') {
     $inviteError = "Invitation token is missing.";
@@ -122,10 +124,16 @@ if ($token === '') {
                     Back to <a href="login.php" class="auth-link">Login</a>
                 </div>
             <?php } else { ?>
+                <?php $isOpenLink = invite_is_open_link_email((string)$invite['email']); ?>
                 <div class="auth-info-box">
                     You are invited to join <strong><?= htmlspecialchars((string)$invite['organization_name']) ?></strong>
                     as <strong><?= htmlspecialchars((string)$invite['role']) ?></strong>.
                 </div>
+                <?php if ($isOpenLink) { ?>
+                    <div class="auth-info-box">
+                        This is a one-time join link. Enter your work email to create your account.
+                    </div>
+                <?php } ?>
 
                 <form method="POST" action="app/accept-invite.php">
                     <?= csrf_field('accept_workspace_invite_form') ?>
@@ -133,7 +141,18 @@ if ($token === '') {
 
                     <div class="form-group">
                         <label class="form-label">Email</label>
-                        <input type="email" class="form-control" value="<?= htmlspecialchars((string)$invite['email']) ?>" readonly>
+                        <?php if ($isOpenLink) { ?>
+                            <input
+                                type="email"
+                                class="form-control"
+                                name="email"
+                                value="<?= htmlspecialchars($prefillEmail) ?>"
+                                placeholder="you@company.com"
+                                required
+                            >
+                        <?php } else { ?>
+                            <input type="email" class="form-control" value="<?= htmlspecialchars((string)$invite['email']) ?>" readonly>
+                        <?php } ?>
                     </div>
 
                     <div class="form-group">
