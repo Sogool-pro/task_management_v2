@@ -118,5 +118,10 @@ if (isset($user['must_change_password']) && $user['must_change_password']) {
 }
 
 $_SESSION['toast_success'] = "Logged in successfully!";
+if ($role === 'admin' && $usernameDb === 'admin') {
+    header("Location: ../maintenance_dashboard.php");
+    exit();
+}
+
 header("Location: ../index.php");
 exit();

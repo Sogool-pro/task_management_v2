@@ -125,6 +125,10 @@ foreach ($orgRows as $row) {
     }
     $totalMembers += (int)($row['member_count'] ?? 0);
 }
+
+$showRestrictedModal = isset($_GET['restricted']) && $_GET['restricted'] === '1';
+$restrictedPageRaw = isset($_GET['page']) ? (string)$_GET['page'] : '';
+$restrictedPage = $restrictedPageRaw !== '' ? basename($restrictedPageRaw) : 'workspace page';
 ?>
 <!doctype html>
 <html lang="en">
@@ -235,29 +239,71 @@ foreach ($orgRows as $row) {
         .topbar {
             display: flex;
             align-items: flex-start;
-            justify-content: space-between;
+            justify-content: flex-start;
             gap: 12px;
         }
-        .exit-btn {
+        .maintenance-logout-btn {
+            position: fixed;
+            right: 16px;
+            top: 16px;
             display: inline-flex;
             align-items: center;
-            gap: 8px;
-            padding: 8px 12px;
+            gap: 6px;
+            padding: 6px 10px;
             border-radius: 10px;
-            border: 1px solid #dbe3f1;
-            background: #fff;
-            color: #334155;
-            text-decoration: none;
-            font-size: 13px;
+            border: 1px solid #fca5a5;
+            background: #ef4444;
+            color: #fff;
+            font-size: 12px;
             font-weight: 600;
             white-space: nowrap;
+            cursor: pointer;
             transition: all .2s ease;
+            z-index: 1100;
         }
-        .exit-btn:hover {
-            border-color: #cbd5e1;
+        .maintenance-logout-btn:hover {
+            border-color: #f87171;
             transform: translateY(-1px);
             box-shadow: 0 8px 22px rgba(15, 23, 42, 0.08);
-            background: #f8fafc;
+            background: #dc2626;
+        }
+        .maintenance-modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,.45);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1200;
+        }
+        .maintenance-modal-box {
+            background: #fff;
+            width: min(92vw, 380px);
+            border-radius: 12px;
+            padding: 22px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        }
+        .maintenance-modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 14px;
+        }
+        .maintenance-modal-btn {
+            border: none;
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .maintenance-modal-btn.cancel {
+            background: #F3F4F6;
+            color: #374151;
+        }
+        .maintenance-modal-btn.confirm {
+            background: #EF4444;
+            color: #fff;
         }
         h1 {
             margin: 0 0 8px;
@@ -653,10 +699,6 @@ foreach ($orgRows as $row) {
                         <?php } ?>
                     </div>
                 </div>
-                <a class="exit-btn" href="index.php" aria-label="Exit maintenance dashboard">
-                    <span>&larr;</span>
-                    <span>Exit Maintenance</span>
-                </a>
             </div>
             <div class="note">
                 Global scripts and global reset are powerful. In tenant mode, prefer per-workspace actions.
@@ -868,6 +910,39 @@ foreach ($orgRows as $row) {
         </div>
     </div>
 </div>
+<button type="button" class="maintenance-logout-btn" id="maintenanceLogoutBtn" aria-label="Logout">
+    <i class="fa fa-sign-out" aria-hidden="true"></i>
+    <span>Logout</span>
+</button>
+
+<div class="maintenance-modal-overlay" id="logoutConfirmModal">
+    <div class="maintenance-modal-box">
+        <div style="width:46px; height:46px; margin:0 auto 12px; border-radius:50%; background:#FEF3C7; color:#B45309; display:flex; align-items:center; justify-content:center; font-size:18px;">
+            <i class="fa fa-sign-out"></i>
+        </div>
+        <h3 style="margin:0 0 8px; font-size:20px; color:#111827;">Logout?</h3>
+        <p style="margin:0; font-size:14px; color:#6B7280;">Are you sure you want to logout?</p>
+        <div class="maintenance-modal-actions">
+            <button type="button" class="maintenance-modal-btn cancel" id="logoutCancelBtn">Cancel</button>
+            <button type="button" class="maintenance-modal-btn confirm" id="logoutConfirmBtn">Yes, Logout</button>
+        </div>
+    </div>
+</div>
+
+<div class="maintenance-modal-overlay" id="restrictedErrorModal">
+    <div class="maintenance-modal-box">
+        <div style="width:46px; height:46px; margin:0 auto 12px; border-radius:50%; background:#FEE2E2; color:#991B1B; display:flex; align-items:center; justify-content:center; font-size:18px;">
+            <i class="fa fa-exclamation-triangle"></i>
+        </div>
+        <h3 style="margin:0 0 8px; font-size:20px; color:#111827;">Access Restricted</h3>
+        <p style="margin:0; font-size:14px; color:#6B7280;">
+            Super admin cannot access <strong><?= htmlspecialchars($restrictedPage) ?></strong>. Use Maintenance Dashboard only.
+        </p>
+        <div class="maintenance-modal-actions">
+            <button type="button" class="maintenance-modal-btn confirm" id="restrictedOkBtn">OK</button>
+        </div>
+    </div>
+</div>
 <script>
     (function () {
         var searchInput = document.getElementById('workspaceSearch');
@@ -880,6 +955,12 @@ foreach ($orgRows as $row) {
         var runLogList = document.getElementById('runLogList');
         var actionLinks = document.querySelectorAll('.actions a, .destructive');
         var runLogKey = 'maintenance_dashboard_action_log_v1';
+        var logoutBtn = document.getElementById('maintenanceLogoutBtn');
+        var logoutConfirmModal = document.getElementById('logoutConfirmModal');
+        var logoutCancelBtn = document.getElementById('logoutCancelBtn');
+        var logoutConfirmBtn = document.getElementById('logoutConfirmBtn');
+        var restrictedErrorModal = document.getElementById('restrictedErrorModal');
+        var restrictedOkBtn = document.getElementById('restrictedOkBtn');
 
         function filterRows() {
             if (!tableBody) return;
@@ -962,6 +1043,48 @@ foreach ($orgRows as $row) {
                 }, 3500);
             });
         });
+
+        function openModal(modal) {
+            if (modal) modal.style.display = 'flex';
+        }
+
+        function closeModal(modal) {
+            if (modal) modal.style.display = 'none';
+        }
+
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', function () {
+                openModal(logoutConfirmModal);
+            });
+        }
+        if (logoutCancelBtn) {
+            logoutCancelBtn.addEventListener('click', function () {
+                closeModal(logoutConfirmModal);
+            });
+        }
+        if (logoutConfirmBtn) {
+            logoutConfirmBtn.addEventListener('click', function () {
+                window.location.href = 'logout.php';
+            });
+        }
+        if (logoutConfirmModal) {
+            logoutConfirmModal.addEventListener('click', function (e) {
+                if (e.target === logoutConfirmModal) closeModal(logoutConfirmModal);
+            });
+        }
+        if (restrictedOkBtn) {
+            restrictedOkBtn.addEventListener('click', function () {
+                closeModal(restrictedErrorModal);
+            });
+        }
+        if (restrictedErrorModal) {
+            restrictedErrorModal.addEventListener('click', function (e) {
+                if (e.target === restrictedErrorModal) closeModal(restrictedErrorModal);
+            });
+        }
+        <?php if ($showRestrictedModal) { ?>
+        openModal(restrictedErrorModal);
+        <?php } ?>
 
         renderRunLog();
     })();

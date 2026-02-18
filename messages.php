@@ -219,6 +219,7 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
                              <button type="button" class="btn-attach" id="attachBtn"><i class="fa fa-paperclip"></i></button>
                              <input type="file" id="fileInput" style="display: none;" multiple>
                              <input type="text" id="messageInput" placeholder="Type a message...">
+                             <div id="mentionSuggestions" class="mention-suggestions" style="display:none;"></div>
                         </div>
                         <button id="sendBtn" class="btn-send"><i class="fa fa-paper-plane-o"></i></button>
                     </div>
@@ -250,6 +251,9 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
             var loadInterval;
             var selectedFiles = []; // Array to store multiple files
             var chatAjaxCsrfToken = <?= json_encode($chatAjaxCsrfToken, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+            var groupMentionMembers = [];
+            var mentionSuggestionsData = [];
+            var mentionSelectionIndex = -1;
 
             // Search Filter
              $("#searchText").on("input", function(){
@@ -324,6 +328,8 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
                     currentChatUserId = userId;
                     currentGroupId = 0;
                     currentChatType = "user";
+                    groupMentionMembers = [];
+                    hideMentionSuggestions();
 
                     // UI Update
                     $("#noChatSelected").hide();
@@ -391,6 +397,7 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
                     currentGroupId = groupId;
                     currentChatUserId = 0;
                     currentChatType = "group";
+                    hideMentionSuggestions();
 
                     $("#noChatSelected").hide();
                     $("#chatInterface").css("display", "flex");
@@ -410,6 +417,7 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
                         $("#rightSidebar").addClass("active");
                     }
                     loadGroupDetails(groupId);
+                    loadGroupMentionMembers(groupId);
                 });
             }
 
@@ -524,8 +532,49 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
                 sendMessage();
             });
 
-            $("#messageInput").keypress(function(e){
-                if(e.which == 13) sendMessage();
+            $("#messageInput").on("input", function(){
+                updateMentionSuggestions();
+            });
+
+            $("#messageInput").on("keydown", function(e){
+                if (!isMentionSuggestionsVisible()) {
+                    if (e.which === 13) sendMessage();
+                    return;
+                }
+
+                if (e.which === 40) { // Down
+                    e.preventDefault();
+                    moveMentionSelection(1);
+                    return;
+                }
+                if (e.which === 38) { // Up
+                    e.preventDefault();
+                    moveMentionSelection(-1);
+                    return;
+                }
+                if (e.which === 13) { // Enter select mention
+                    e.preventDefault();
+                    applySelectedMention();
+                    return;
+                }
+                if (e.which === 27) { // Esc
+                    e.preventDefault();
+                    hideMentionSuggestions();
+                }
+            });
+
+            $(document).on("mousedown", ".mention-suggestion-item", function(e){
+                e.preventDefault();
+                var idx = parseInt($(this).attr("data-idx"), 10);
+                if (!isNaN(idx) && mentionSuggestionsData[idx] && mentionSuggestionsData[idx].full_name) {
+                    applyMentionName(mentionSuggestionsData[idx].full_name);
+                }
+            });
+
+            $(document).on("click", function(e){
+                if (!$(e.target).closest("#messageInput, #mentionSuggestions").length) {
+                    hideMentionSuggestions();
+                }
             });
 
             function sendMessage() {
@@ -566,6 +615,7 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
                     contentType: false,
                     success: function(data) {
                         $("#messageInput").val("");
+                        hideMentionSuggestions();
                         resetAttachment();
                         loadMessages(true); // true to force scroll
                         refreshChatLists(); // Update list order immediately
@@ -652,6 +702,171 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
                     bindChatClicks();
                     bindGroupClicks();
                 });
+            }
+
+            function loadGroupMentionMembers(groupId) {
+                groupMentionMembers = [];
+                mentionSuggestionsData = [];
+                mentionSelectionIndex = -1;
+                if (!groupId) return;
+
+                $.post('app/ajax/getGroupMembers.php', { group_id: groupId, csrf_token: chatAjaxCsrfToken }, function(data){
+                    var res = null;
+                    try {
+                        res = (typeof data === "string") ? JSON.parse(data) : data;
+                    } catch (e) {
+                        res = null;
+                    }
+                    if (res && res.ok && Array.isArray(res.members)) {
+                        groupMentionMembers = res.members;
+                    }
+                });
+            }
+
+            function escapeHtml(str) {
+                return String(str)
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#39;');
+            }
+
+            function isMentionSuggestionsVisible() {
+                return $("#mentionSuggestions").is(":visible") && mentionSuggestionsData.length > 0;
+            }
+
+            function hideMentionSuggestions() {
+                mentionSuggestionsData = [];
+                mentionSelectionIndex = -1;
+                $("#mentionSuggestions").hide().empty();
+            }
+
+            function getMentionContext() {
+                if (currentChatType !== "group") return null;
+                var inputEl = document.getElementById("messageInput");
+                if (!inputEl) return null;
+
+                var text = inputEl.value || "";
+                var caret = inputEl.selectionStart || 0;
+                var left = text.slice(0, caret);
+                var match = left.match(/(?:^|\s)@([^\n@]*)$/);
+                if (!match) return null;
+
+                var query = match[1] || "";
+                var start = caret - query.length - 1; // points to '@'
+                return { query: query, start: start, caret: caret };
+            }
+
+            function renderMentionSuggestions(items) {
+                if (!items.length) {
+                    hideMentionSuggestions();
+                    return;
+                }
+
+                mentionSuggestionsData = items;
+                if (mentionSelectionIndex < 0 || mentionSelectionIndex >= mentionSuggestionsData.length) {
+                    mentionSelectionIndex = 0;
+                }
+
+                var html = "";
+                for (var i = 0; i < mentionSuggestionsData.length; i++) {
+                    var item = mentionSuggestionsData[i];
+                    var activeClass = (i === mentionSelectionIndex) ? " active" : "";
+                    var display = item.display_name || item.full_name || "";
+                    var subtitle = item.subtitle || "";
+                    var avatarHtml = '';
+                    if (item.is_everyone) {
+                        avatarHtml = '<div class="mention-suggestion-avatar everyone"><i class="fa fa-users"></i></div>';
+                    } else if (item.profile_image && item.profile_image !== 'default.png') {
+                        avatarHtml = '<div class="mention-suggestion-avatar"><img src="uploads/' + encodeURIComponent(item.profile_image) + '" alt=""></div>';
+                    } else {
+                        var initial = display ? display.charAt(0).toUpperCase() : '?';
+                        avatarHtml = '<div class="mention-suggestion-avatar fallback">' + escapeHtml(initial) + '</div>';
+                    }
+
+                    html += '<div class="mention-suggestion-item' + activeClass + '" data-idx="' + i + '">' +
+                                avatarHtml +
+                                '<div class="mention-suggestion-meta">' +
+                                    '<div class="mention-suggestion-name">' + escapeHtml(display) + '</div>' +
+                                    (subtitle ? ('<div class="mention-suggestion-sub">' + escapeHtml(subtitle) + '</div>') : '') +
+                                '</div>' +
+                            '</div>';
+                }
+
+                $("#mentionSuggestions").html(html).show();
+            }
+
+            function updateMentionSuggestions() {
+                var ctx = getMentionContext();
+                if (!ctx || !Array.isArray(groupMentionMembers) || groupMentionMembers.length === 0) {
+                    hideMentionSuggestions();
+                    return;
+                }
+
+                var query = (ctx.query || "").trim().toLowerCase();
+                var filtered = groupMentionMembers.filter(function(member){
+                    var name = (member.full_name || "").toLowerCase();
+                    if (!name) return false;
+                    return query === "" || name.indexOf(query) !== -1;
+                }).slice(0, 7).map(function(member){
+                    return {
+                        id: member.id,
+                        full_name: member.full_name,
+                        display_name: member.full_name,
+                        mention_value: member.full_name,
+                        profile_image: member.profile_image || '',
+                        subtitle: (member.user_role || 'member').toString().toUpperCase(),
+                        is_everyone: false
+                    };
+                });
+
+                if ("everyone".indexOf(query) !== -1 || query === "") {
+                    filtered.unshift({
+                        id: 0,
+                        full_name: 'everyone',
+                        display_name: 'everyone',
+                        mention_value: 'everyone',
+                        profile_image: '',
+                        subtitle: 'Mention everyone in this chat',
+                        is_everyone: true
+                    });
+                }
+
+                renderMentionSuggestions(filtered);
+            }
+
+            function moveMentionSelection(direction) {
+                if (!mentionSuggestionsData.length) return;
+                mentionSelectionIndex += direction;
+                if (mentionSelectionIndex < 0) mentionSelectionIndex = mentionSuggestionsData.length - 1;
+                if (mentionSelectionIndex >= mentionSuggestionsData.length) mentionSelectionIndex = 0;
+                renderMentionSuggestions(mentionSuggestionsData);
+            }
+
+            function applySelectedMention() {
+                if (!mentionSuggestionsData.length || mentionSelectionIndex < 0) return;
+                var picked = mentionSuggestionsData[mentionSelectionIndex];
+                if (!picked || !picked.mention_value) return;
+                applyMentionName(picked.mention_value);
+            }
+
+            function applyMentionName(name) {
+                var ctx = getMentionContext();
+                var inputEl = document.getElementById("messageInput");
+                if (!ctx || !inputEl) return;
+
+                var value = inputEl.value || "";
+                var before = value.slice(0, ctx.start);
+                var after = value.slice(ctx.caret);
+                var replacement = "@" + name + " ";
+                var nextValue = before + replacement + after;
+                inputEl.value = nextValue;
+
+                var newCaret = (before + replacement).length;
+                inputEl.focus();
+                inputEl.setSelectionRange(newCaret, newCaret);
+                hideMentionSuggestions();
             }
 
             // Auto-open chat if ID is provided in URL

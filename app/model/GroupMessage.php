@@ -144,6 +144,77 @@ function get_group_attachments($pdo, $message_id)
     return $stmt->fetchAll(PDO::FETCH_COLUMN) ?: [];
 }
 
+function build_group_member_mention_names($members)
+{
+    $names = [];
+    if (!is_array($members)) {
+        return $names;
+    }
+
+    foreach ($members as $member) {
+        $name = trim((string)($member['full_name'] ?? ''));
+        if ($name === '') {
+            continue;
+        }
+        $names[$name] = true;
+    }
+
+    $result = array_keys($names);
+    usort($result, function ($a, $b) {
+        $lenA = function_exists('mb_strlen') ? mb_strlen($a) : strlen($a);
+        $lenB = function_exists('mb_strlen') ? mb_strlen($b) : strlen($b);
+        return $lenB <=> $lenA;
+    });
+
+    return $result;
+}
+
+function format_group_message_mentions($message, $memberNames)
+{
+    $working = (string)$message;
+    if ($working === '') {
+        return '';
+    }
+
+    $tokens = [];
+    $tokenIndex = 0;
+    foreach ((array)$memberNames as $name) {
+        $name = trim((string)$name);
+        if ($name === '') {
+            continue;
+        }
+
+        $token = "__MENTION_{$tokenIndex}__";
+        $pattern = '/(^|[\s\(\[\{>])@' . preg_quote($name, '/') . '(?=$|[\s\)\]\}\,\.\!\?\:\;])/iu';
+        $working = preg_replace_callback(
+            $pattern,
+            function ($m) use ($token) {
+                return $m[1] . $token;
+            },
+            $working
+        );
+        $tokens[$token] = $name;
+        $tokenIndex++;
+    }
+
+    $working = preg_replace_callback(
+        '/(^|[\s\(\[\{>])@everyone(?=$|[\s\)\]\}\,\.\!\?\:\;])/iu',
+        function ($m) {
+            return $m[1] . '__MENTION_EVERYONE__';
+        },
+        $working
+    );
+
+    $escaped = nl2br(htmlspecialchars($working, ENT_QUOTES, 'UTF-8'));
+    $escaped = str_replace('__MENTION_EVERYONE__', '<span class="chat-mention chat-mention-everyone">@everyone</span>', $escaped);
+    foreach ($tokens as $token => $name) {
+        $replacement = '<span class="chat-mention">@' . htmlspecialchars($name, ENT_QUOTES, 'UTF-8') . '</span>';
+        $escaped = str_replace($token, $replacement, $escaped);
+    }
+
+    return $escaped;
+}
+
 if (!function_exists('table_exists')) {
     function table_exists($pdo, $table_name)
     {

@@ -29,6 +29,8 @@ if (isset($_SESSION['id'])) {
 
         // Mark as read
         mark_group_as_read($pdo, $group_id, $user_id);
+        $groupMembers = get_group_members($pdo, $group_id);
+        $mentionNames = build_group_member_mention_names($groupMembers);
 
         $messages = get_group_messages($pdo, $group_id);
 
@@ -36,6 +38,7 @@ if (isset($_SESSION['id'])) {
             foreach ($messages as $msg) {
                 $attachments = get_group_attachments($pdo, $msg['id']);
                 $isMine = ((int)$msg['sender_id'] === (int)$user_id);
+                $formattedMessage = format_group_message_mentions($msg['message'], $mentionNames);
                 
                 // Prepare Avatar
                 $avatarHtml = '';
@@ -50,7 +53,7 @@ if (isset($_SESSION['id'])) {
         <?php if ($isMine) { ?>
             <div class="message-outgoing">
                  <div class="message-bubble-outgoing">
-                    <?=$msg['message']?>
+                    <?=$formattedMessage?>
                     <?php 
                     if (!empty($attachments)) { 
                         foreach($attachments as $attachment) {
@@ -84,7 +87,7 @@ if (isset($_SESSION['id'])) {
                         <?=htmlspecialchars($msg['full_name'])?>
                      </span>
                      <div class="message-bubble-incoming">
-                        <?=$msg['message']?>
+                        <?=$formattedMessage?>
                         <?php 
                         if (!empty($attachments)) { 
                             foreach($attachments as $attachment) {

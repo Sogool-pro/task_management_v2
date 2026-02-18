@@ -1,4 +1,19 @@
-<?php 
+<?php
+    if (
+        isset($_SESSION['role'], $_SESSION['username'])
+        && $_SESSION['role'] === 'admin'
+        && $_SESSION['username'] === 'admin'
+    ) {
+        $blockedPage = basename($_SERVER['PHP_SELF'] ?? 'workspace');
+        $target = "maintenance_dashboard.php?restricted=1&page=" . urlencode($blockedPage);
+        if (!headers_sent()) {
+            header("Location: " . $target);
+        } else {
+            echo '<script>window.location.replace(' . json_encode($target) . ');</script>';
+        }
+        exit();
+    }
+
     include_once "app/model/Message.php";
     include_once "app/model/GroupMessage.php";
     $dmUnread = countAllUnread($_SESSION['id'], $pdo);
