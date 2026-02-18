@@ -40,6 +40,16 @@ if ((isset($_SESSION['role']) && $_SESSION['role'] == "employee") || (isset($_SE
         }
 
         if ($action == 'accept') {
+            if (!$is_self_review && ($score === null || $score < 1 || $score > 5)) {
+                $em = "Please provide a performance score between 1 and 5 before accepting.";
+                $openTaskId = (int)($subtask['task_id'] ?? 0);
+                if ($openTaskId > 0) {
+                    header("Location: ../my_task.php?error=$em&open_task=$openTaskId");
+                } else {
+                    header("Location: ../my_task.php?error=$em");
+                }
+                exit();
+            }
             $status = 'completed';
             $score_msg = ($score !== null) ? " Score: $score/5." : "";
             if ($is_self_review) {

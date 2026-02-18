@@ -796,6 +796,20 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] === 
         </div>
     </div>
 
+    <!-- Validation Error Modal -->
+    <div id="validationErrorModal" class="modal-overlay" style="display: none; z-index: 2400 !important;">
+        <div class="modal-box">
+            <div style="text-align: center;">
+                <i class="fa fa-exclamation-triangle" style="font-size: 48px; color: #EF4444; margin-bottom: 15px;"></i>
+                <h3 style="margin: 0; font-size: 20px; color: #111827;">Rating Required</h3>
+                <p id="validationErrorText" style="color: #6B7280; font-size: 14px; margin: 10px 0 20px;"></p>
+                <div style="display: flex; justify-content: center;">
+                    <button type="button" class="btn-v2 btn-red" style="background: #EF4444;" onclick="closeValidationModal()">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         const taskLeaderMap = <?= json_encode($taskLeaderMap, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?>;
 
@@ -862,6 +876,15 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] === 
             $("#deleteTaskModal").fadeOut(200);
         }
 
+        function openValidationModal(message) {
+            $("#validationErrorText").text(message);
+            $("#validationErrorModal").css("display", "flex").hide().fadeIn(200);
+        }
+
+        function closeValidationModal() {
+            $("#validationErrorModal").fadeOut(200);
+        }
+
         // Task rating stars
         $(".task-rating-input i").hover(function() {
             const val = $(this).data('value');
@@ -916,8 +939,18 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] === 
             const taskRating = parseInt($("#ratingValue").val(), 10) || 0;
             if (taskRating < 1 || taskRating > 5) {
                 e.preventDefault();
-                alert("Please provide a task rating.");
+                openValidationModal("Please provide a task rating.");
                 return;
+            }
+
+            const leaderBlockVisible = $("#leaderRatingBlock").is(":visible");
+            if (leaderBlockVisible) {
+                const leaderRating = parseInt($("#leaderRatingValue").val(), 10) || 0;
+                if (leaderRating < 1 || leaderRating > 5) {
+                    e.preventDefault();
+                    openValidationModal("Please provide a leader rating.");
+                    return;
+                }
             }
         });
     </script>

@@ -927,6 +927,20 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
         </div>
     </div>
 
+    <!-- Validation Error Modal -->
+    <div id="validationErrorModal" class="modal-overlay" style="display: none; z-index: 2400 !important;">
+        <div class="modal-box">
+            <div style="text-align: center;">
+                <i class="fa fa-exclamation-triangle" style="font-size: 48px; color: #EF4444; margin-bottom: 15px;"></i>
+                <h3 style="margin: 0; font-size: 20px; color: #111827;">Rating Required</h3>
+                <p id="validationErrorText" style="color: #6B7280; font-size: 14px; margin: 10px 0 20px;"></p>
+                <div style="display: flex; justify-content: center;">
+                    <button type="button" class="btn-v2 btn-red" style="background: #EF4444;" onclick="closeValidationModal()">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         function openTaskModal(taskId) {
             var modal = document.getElementById("modal-task-" + taskId);
@@ -966,6 +980,15 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
 
         function closeResubmitModal() {
             $("#resubmitModal").fadeOut(200);
+        }
+
+        function openValidationModal(message) {
+            $("#validationErrorText").text(message);
+            $("#validationErrorModal").css("display", "flex").hide().fadeIn(200);
+        }
+
+        function closeValidationModal() {
+            $("#validationErrorModal").fadeOut(200);
         }
 
         // Auto-open task if param exists
@@ -1045,11 +1068,30 @@ if (isset($_SESSION['role']) && isset($_SESSION['id'])) {
 
         document.addEventListener('submit', function (e) {
             var form = e.target;
-            if (!form || form.getAttribute('action') !== 'app/rate-leader.php') return;
-            var hidden = form.querySelector('input[name="rating"]');
-            if (!hidden || parseInt(hidden.value, 10) < 1) {
-                e.preventDefault();
-                alert('Please select a star rating.');
+            if (!form) return;
+
+            if (form.getAttribute('action') === 'app/rate-leader.php') {
+                var hidden = form.querySelector('input[name="rating"]');
+                if (!hidden || parseInt(hidden.value, 10) < 1) {
+                    e.preventDefault();
+                    openValidationModal('Please select a star rating.');
+                }
+                return;
+            }
+
+            if (form.getAttribute('action') === 'app/review-subtask.php') {
+                var submitter = e.submitter || document.activeElement;
+                var action = submitter ? submitter.value : '';
+                if (action !== 'accept') return;
+
+                var scoreInputs = form.querySelectorAll('input[name="score"]');
+                if (scoreInputs.length > 0) {
+                    var selected = form.querySelector('input[name="score"]:checked');
+                    if (!selected) {
+                        e.preventDefault();
+                        openValidationModal('Please provide a performance score before accepting.');
+                    }
+                }
             }
         });
     </script>

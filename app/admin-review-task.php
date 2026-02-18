@@ -59,8 +59,9 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] == "
             }
 
             if ($leader_id > 0 && ($leader_rating < 1 || $leader_rating > 5)) {
-                // If leader rating is omitted in UI, default to task rating so admin review can proceed.
-                $leader_rating = $rating;
+                $em = "Leader rating must be between 1 and 5.";
+                header("Location: ../tasks.php?error=$em&open_task=$task_id");
+                exit();
             }
 
             $sql = "UPDATE tasks SET status = 'completed', rating = ?, review_comment = ?, reviewed_by = ?, reviewed_at = NOW() WHERE id = ?";

@@ -592,11 +592,13 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] == "
                                 <div class="card-bottom">
                                     <div class="created-at">Created <?= $createdAt ?></div>
                                     <div style="display: flex; gap: 10px;">
-                                        <form action="app/delete-group.php" method="POST" style="display:inline;" onsubmit="return confirm('Delete this group?');">
-                                            <?= csrf_field('delete_group_form') ?>
-                                            <input type="hidden" name="id" value="<?=$group['id']?>">
-                                            <button type="submit" class="action-icon delete" title="Delete"><i class="fa fa-trash-o"></i></button>
-                                        </form>
+                                        <button
+                                            type="button"
+                                            class="action-icon delete"
+                                            title="Delete"
+                                            onclick='openDeleteGroupModal(<?= (int)$group["id"] ?>, <?= json_encode($group["name"]) ?>)'>
+                                            <i class="fa fa-trash-o"></i>
+                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -629,6 +631,24 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] == "
         </div>
     </div>
     <?php } ?>
+
+    <div id="deleteGroupModal" class="custom-modal-overlay">
+        <div class="custom-modal" role="dialog" aria-modal="true" aria-labelledby="delete-group-heading">
+            <div id="delete-group-heading" class="custom-modal-header">Delete Group?</div>
+            <div class="custom-modal-body">
+                Are you sure you want to delete <strong id="deleteGroupName"></strong>?<br>
+                This action cannot be undone.
+            </div>
+            <div class="custom-modal-actions" style="display:flex; justify-content:flex-end; gap:10px;">
+                <button type="button" onclick="closeDeleteGroupModal()" style="background:#E5E7EB; color:#111827;">Cancel</button>
+                <form action="app/delete-group.php" method="POST" style="display:inline;">
+                    <?= csrf_field('delete_group_form') ?>
+                    <input type="hidden" name="id" id="deleteGroupId">
+                    <button type="submit" style="background:#EF4444;">Delete Group</button>
+                </form>
+            </div>
+        </div>
+    </div>
 
     <script>
         // --- View Switching ---
@@ -815,12 +835,30 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] == "
             if (modal) modal.style.display = 'none';
         }
 
+        function openDeleteGroupModal(groupId, groupName) {
+            var idInput = document.getElementById('deleteGroupId');
+            var nameEl = document.getElementById('deleteGroupName');
+            var modal = document.getElementById('deleteGroupModal');
+            if (idInput) idInput.value = groupId;
+            if (nameEl) nameEl.textContent = groupName || 'this group';
+            if (modal) modal.style.display = 'flex';
+        }
+
+        function closeDeleteGroupModal() {
+            var modal = document.getElementById('deleteGroupModal');
+            if (modal) modal.style.display = 'none';
+        }
+
         <?php if ($show_duplicate_modal) { ?>
         document.getElementById('duplicateGroupModal').style.display = 'flex';
         document.getElementById('duplicateGroupModal').addEventListener('click', function(e){
             if (e.target === this) closeDuplicateGroupModal();
         });
         <?php } ?>
+
+        document.getElementById('deleteGroupModal').addEventListener('click', function(e){
+            if (e.target === this) closeDeleteGroupModal();
+        });
     </script>
     
     <style>
