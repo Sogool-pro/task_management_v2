@@ -18,7 +18,7 @@ if ($token === '') {
     $inviteError = "Invitation system is not available yet.";
 } else {
     $stmt = $pdo->prepare(
-        "SELECT wi.id, wi.email, wi.full_name, wi.role, wi.status, wi.expires_at,
+        "SELECT wi.id, wi.organization_id, wi.email, wi.full_name, wi.role, wi.status, wi.expires_at,
                 o.name AS organization_name, o.status AS organization_status
          FROM workspace_invites wi
          JOIN organizations o ON o.id = wi.organization_id
@@ -166,15 +166,21 @@ if ($token === '') {
                         >
                     </div>
 
-                    <div class="form-group">
-                        <label class="form-label">Password</label>
-                        <input type="password" class="form-control" name="password" placeholder="At least 8 characters" required>
-                    </div>
+                    <?php if (!$isOpenLink) { ?>
+                        <div class="form-group">
+                            <label class="form-label">Password</label>
+                            <input type="password" class="form-control" name="password" placeholder="At least 8 characters" required>
+                        </div>
 
-                    <div class="form-group">
-                        <label class="form-label">Confirm Password</label>
-                        <input type="password" class="form-control" name="confirm_password" placeholder="Repeat password" required>
-                    </div>
+                        <div class="form-group">
+                            <label class="form-label">Confirm Password</label>
+                            <input type="password" class="form-control" name="confirm_password" placeholder="Repeat password" required>
+                        </div>
+                    <?php } else { ?>
+                        <div class="auth-info-box">
+                            After you submit, we will email a temporary password. You will be asked to change it after first login.
+                        </div>
+                    <?php } ?>
 
                     <button type="submit" class="btn-primary">Join Workspace</button>
                 </form>

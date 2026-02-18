@@ -112,8 +112,9 @@ Behavior now:
 2. Admin can upload a bulk file (`.xlsx`, `.csv`, or text-based `.pdf`) with employee names/emails.
 3. Admin can generate a one-time shareable join link.
 4. Employee opens `join-workspace.php?token=...`.
-5. Employee sets password (and email when using one-time link) and is created inside the correct workspace.
+5. Employee sets password for normal invites, but for one-time links enters email/full name and receives a temporary password by email.
 6. Invite/link token is marked accepted after successful join.
+7. One-time-link users are flagged to change password on first login.
 
 ### 3.5 Direct add-user flow deprecated
 

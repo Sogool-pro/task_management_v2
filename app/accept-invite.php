@@ -14,7 +14,19 @@ function validate_input($data)
     return $data;
 }
 
-if (!isset($_POST['token']) || !isset($_POST['password']) || !isset($_POST['confirm_password']) || !isset($_POST['full_name'])) {
+function generate_temporary_password($length = 10)
+{
+    $length = max(8, (int)$length);
+    $alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%";
+    $max = strlen($alphabet) - 1;
+    $out = '';
+    for ($i = 0; $i < $length; $i++) {
+        $out .= $alphabet[random_int(0, $max)];
+    }
+    return $out;
+}
+
+if (!isset($_POST['token']) || !isset($_POST['full_name'])) {
     header("Location: ../login.php?error=Invalid invitation request.");
     exit();
 }
@@ -28,8 +40,8 @@ if (!csrf_verify('accept_workspace_invite_form', $_POST['csrf_token'] ?? null, t
 }
 
 $token = validate_input($_POST['token']);
-$password = (string)$_POST['password'];
-$confirmPassword = (string)$_POST['confirm_password'];
+$password = (string)($_POST['password'] ?? '');
+$confirmPassword = (string)($_POST['confirm_password'] ?? '');
 $fullName = validate_input($_POST['full_name']);
 
 if ($token === '') {
@@ -39,21 +51,6 @@ if ($token === '') {
 
 if ($fullName === '') {
     header("Location: ../join-workspace.php?token=" . urlencode($token) . $redirectEmailParam . "&error=" . urlencode("Full name is required."));
-    exit();
-}
-
-if ($password === '' || $confirmPassword === '') {
-    header("Location: ../join-workspace.php?token=" . urlencode($token) . $redirectEmailParam . "&error=" . urlencode("Password fields are required."));
-    exit();
-}
-
-if (strlen($password) < 8) {
-    header("Location: ../join-workspace.php?token=" . urlencode($token) . $redirectEmailParam . "&error=" . urlencode("Password must be at least 8 characters."));
-    exit();
-}
-
-if ($password !== $confirmPassword) {
-    header("Location: ../join-workspace.php?token=" . urlencode($token) . $redirectEmailParam . "&error=" . urlencode("Passwords do not match."));
     exit();
 }
 
@@ -115,7 +112,25 @@ try {
         throw new RuntimeException("This email already has an account. Ask your admin to use password reset.");
     }
 
-    $passwordHash = password_hash($password, PASSWORD_DEFAULT);
+    $generatedPassword = null;
+    $mustChangePassword = false;
+    if ($isOpenLink) {
+        $generatedPassword = generate_temporary_password(10);
+        $passwordHash = password_hash($generatedPassword, PASSWORD_DEFAULT);
+        $mustChangePassword = true;
+    } else {
+        if ($password === '' || $confirmPassword === '') {
+            throw new RuntimeException("Password fields are required.");
+        }
+        if (strlen($password) < 8) {
+            throw new RuntimeException("Password must be at least 8 characters.");
+        }
+        if ($password !== $confirmPassword) {
+            throw new RuntimeException("Passwords do not match.");
+        }
+        $passwordHash = password_hash($password, PASSWORD_DEFAULT);
+    }
+
     $organizationId = (int)$invite['organization_id'];
 
     $capacity = tenant_check_workspace_capacity($pdo, $organizationId);
@@ -125,14 +140,14 @@ try {
 
     if (tenant_column_exists($pdo, 'users', 'organization_id')) {
         $sql = "INSERT INTO users (full_name, username, password, role, must_change_password, organization_id)
-                VALUES (?, ?, ?, ?, FALSE, ?)";
+                VALUES (?, ?, ?, ?, ?, ?)";
         $stmt = $pdo->prepare($sql);
-        $stmt->execute([$fullName, $email, $passwordHash, $role, $organizationId]);
+        $stmt->execute([$fullName, $email, $passwordHash, $role, $mustChangePassword ? "true" : "false", $organizationId]);
     } else {
         $sql = "INSERT INTO users (full_name, username, password, role, must_change_password)
-                VALUES (?, ?, ?, ?, FALSE)";
+                VALUES (?, ?, ?, ?, ?)";
         $stmt = $pdo->prepare($sql);
-        $stmt->execute([$fullName, $email, $passwordHash, $role]);
+        $stmt->execute([$fullName, $email, $passwordHash, $role, $mustChangePassword ? "true" : "false"]);
     }
 
     $newUserId = (int)$pdo->lastInsertId();
@@ -157,9 +172,20 @@ try {
     );
     $stmt->execute([$newUserId, $email, $fullName, (int)$invite['id']]);
 
+    if ($isOpenLink) {
+        include_once "send_email.php";
+        if (!send_confirmation_email($email, $fullName, (string)$generatedPassword)) {
+            throw new RuntimeException("Temporary password email could not be sent. Please try again.");
+        }
+    }
+
     $pdo->commit();
 
-    $msg = "Account created successfully. You can now log in.";
+    if ($isOpenLink) {
+        $msg = "Account created. A temporary password was sent to your email.";
+    } else {
+        $msg = "Account created successfully. You can now log in.";
+    }
     header("Location: ../login.php?success=" . urlencode($msg));
     exit();
 } catch (Throwable $e) {

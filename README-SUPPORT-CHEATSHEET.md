@@ -122,6 +122,7 @@ Do this:
 1. Check `workspace_invites.status` for that token.
 2. If status is `accepted`, the link was already consumed (single-use by design).
 3. If status is `expired`/`revoked`, generate a new one-time link from `invite-user.php`.
+4. For successful one-time joins, confirm temporary password email was delivered and user is asked to change password after first login.
 
 ### 4.3 "Employee cannot join workspace"
 
