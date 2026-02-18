@@ -5,10 +5,12 @@ if (session_status() !== PHP_SESSION_ACTIVE) {
 include "DB_connection.php";
 require_once "inc/tenant.php";
 require_once "inc/csrf.php";
+require_once "app/invite_helpers.php";
 
 $token = trim((string)($_GET['token'] ?? ''));
 $invite = null;
 $inviteError = null;
+$prefillEmail = trim((string)($_GET['email'] ?? ''));
 
 if ($token === '') {
     $inviteError = "Invitation token is missing.";
@@ -16,7 +18,7 @@ if ($token === '') {
     $inviteError = "Invitation system is not available yet.";
 } else {
     $stmt = $pdo->prepare(
-        "SELECT wi.id, wi.email, wi.full_name, wi.role, wi.status, wi.expires_at,
+        "SELECT wi.id, wi.organization_id, wi.email, wi.full_name, wi.role, wi.status, wi.expires_at,
                 o.name AS organization_name, o.status AS organization_status
          FROM workspace_invites wi
          JOIN organizations o ON o.id = wi.organization_id
@@ -122,10 +124,16 @@ if ($token === '') {
                     Back to <a href="login.php" class="auth-link">Login</a>
                 </div>
             <?php } else { ?>
+                <?php $isOpenLink = invite_is_open_link_email((string)$invite['email']); ?>
                 <div class="auth-info-box">
                     You are invited to join <strong><?= htmlspecialchars((string)$invite['organization_name']) ?></strong>
                     as <strong><?= htmlspecialchars((string)$invite['role']) ?></strong>.
                 </div>
+                <?php if ($isOpenLink) { ?>
+                    <div class="auth-info-box">
+                        This is a one-time join link. Enter your work email to create your account.
+                    </div>
+                <?php } ?>
 
                 <form method="POST" action="app/accept-invite.php">
                     <?= csrf_field('accept_workspace_invite_form') ?>
@@ -133,7 +141,18 @@ if ($token === '') {
 
                     <div class="form-group">
                         <label class="form-label">Email</label>
-                        <input type="email" class="form-control" value="<?= htmlspecialchars((string)$invite['email']) ?>" readonly>
+                        <?php if ($isOpenLink) { ?>
+                            <input
+                                type="email"
+                                class="form-control"
+                                name="email"
+                                value="<?= htmlspecialchars($prefillEmail) ?>"
+                                placeholder="you@company.com"
+                                required
+                            >
+                        <?php } else { ?>
+                            <input type="email" class="form-control" value="<?= htmlspecialchars((string)$invite['email']) ?>" readonly>
+                        <?php } ?>
                     </div>
 
                     <div class="form-group">
@@ -147,15 +166,21 @@ if ($token === '') {
                         >
                     </div>
 
-                    <div class="form-group">
-                        <label class="form-label">Password</label>
-                        <input type="password" class="form-control" name="password" placeholder="At least 8 characters" required>
-                    </div>
+                    <?php if (!$isOpenLink) { ?>
+                        <div class="form-group">
+                            <label class="form-label">Password</label>
+                            <input type="password" class="form-control" name="password" placeholder="At least 8 characters" required>
+                        </div>
 
-                    <div class="form-group">
-                        <label class="form-label">Confirm Password</label>
-                        <input type="password" class="form-control" name="confirm_password" placeholder="Repeat password" required>
-                    </div>
+                        <div class="form-group">
+                            <label class="form-label">Confirm Password</label>
+                            <input type="password" class="form-control" name="confirm_password" placeholder="Repeat password" required>
+                        </div>
+                    <?php } else { ?>
+                        <div class="auth-info-box">
+                            After you submit, we will email a temporary password. You will be asked to change it after first login.
+                        </div>
+                    <?php } ?>
 
                     <button type="submit" class="btn-primary">Join Workspace</button>
                 </form>

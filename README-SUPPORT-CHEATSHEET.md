@@ -98,6 +98,15 @@ Do this:
 3. Verify SMTP settings in `.env.local` (`MAIL_*` values).
 4. Ask user to check spam folder.
 
+### 4.1.1 "Bulk invite upload failed"
+
+Checklist:
+
+1. Confirm file extension is `.xlsx`, `.csv`, or text-based `.pdf`.
+2. Confirm file has employee name/email data (headers like `Full Name`, `Email` recommended).
+3. Confirm file size is <= 5MB.
+4. If PDF fails extraction, convert it to `.xlsx` or `.csv` and retry.
+
 ### 4.2 "Invite link says invalid/expired"
 
 Do this:
@@ -105,6 +114,15 @@ Do this:
 1. Check token/status/expiry in `workspace_invites`.
 2. If expired or revoked, send a new invite.
 3. Ensure workspace status is not `suspended` or `canceled`.
+
+### 4.2.1 "One-time join link does not work anymore"
+
+Do this:
+
+1. Check `workspace_invites.status` for that token.
+2. If status is `accepted`, the link was already consumed (single-use by design).
+3. If status is `expired`/`revoked`, generate a new one-time link from `invite-user.php`.
+4. For successful one-time joins, confirm temporary password email was delivered and user is asked to change password after first login.
 
 ### 4.3 "Employee cannot join workspace"
 

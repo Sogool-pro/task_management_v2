@@ -5,6 +5,7 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] === 
     include "app/model/user.php";
     require_once "inc/tenant.php";
     require_once "inc/csrf.php";
+    require_once "app/invite_helpers.php";
     include "app/mail_config.php";
 
     $is_super_admin = is_super_admin($_SESSION['id'], $pdo);
@@ -223,6 +224,12 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] === 
             <span class="mono"><?= htmlspecialchars($_GET['manual_link']) ?></span>
         </div>
     <?php } ?>
+    <?php if (isset($_GET['one_time_link'])) { ?>
+        <div class="alert-box alert-success">
+            One-time join link:
+            <span class="mono"><?= htmlspecialchars($_GET['one_time_link']) ?></span>
+        </div>
+    <?php } ?>
 
     <?php if (!$hasInviteTable) { ?>
         <div class="card alert-box alert-error">
@@ -258,6 +265,42 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] === 
                 </div>
             </form>
         </div>
+
+        <div class="card">
+            <h3 style="margin-top:0;">Bulk Invite Upload</h3>
+            <p style="margin: 0 0 12px; color:#6B7280; font-size:13px;">
+                Upload employee list as <strong>.xlsx</strong>, <strong>.csv</strong>, or text-based <strong>.pdf</strong>.
+                Include columns for name and email (for example: <code>Full Name</code>, <code>Email</code>).
+            </p>
+            <form action="app/invite-users-bulk.php" method="POST" enctype="multipart/form-data">
+                <?= csrf_field('bulk_invite_form') ?>
+                <input
+                    class="input-field"
+                    type="file"
+                    name="employees_file"
+                    accept=".xlsx,.csv,.pdf"
+                    required
+                >
+                <div style="margin-top: 12px;">
+                    <button class="btn-primary-lite" type="submit">
+                        <i class="fa fa-upload"></i> Upload and Send Invites
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <div class="card">
+            <h3 style="margin-top:0;">Generate One-time Join Link</h3>
+            <p style="margin: 0 0 12px; color:#6B7280; font-size:13px;">
+                Create a single-use link you can send directly to one employee. The first valid signup consumes the link.
+            </p>
+            <form action="app/generate-invite-link.php" method="POST">
+                <?= csrf_field('generate_workspace_join_link_form') ?>
+                <button class="btn-primary-lite" type="submit">
+                    <i class="fa fa-link"></i> Generate One-time Link
+                </button>
+            </form>
+        </div>
     <?php } ?>
 
     <div class="card">
@@ -280,6 +323,7 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] === 
                     <tbody>
                     <?php foreach ($invites as $invite) {
                         $status = strtolower((string)$invite['status']);
+                        $isOpenLink = invite_is_open_link_email((string)$invite['email']);
                         $statusClass = 'st-expired';
                         if ($status === 'pending') {
                             $statusClass = 'st-pending';
@@ -291,8 +335,8 @@ if (isset($_SESSION['role']) && isset($_SESSION['id']) && $_SESSION['role'] === 
                         $joinLink = APP_URL . '/join-workspace.php?token=' . $invite['token'];
                         ?>
                         <tr>
-                            <td><?= htmlspecialchars((string)$invite['email']) ?></td>
-                            <td><?= htmlspecialchars((string)($invite['full_name'] ?: '-')) ?></td>
+                            <td><?= htmlspecialchars(invite_format_display_email((string)$invite['email'])) ?></td>
+                            <td><?= htmlspecialchars((string)($invite['full_name'] ?: ($isOpenLink ? 'Open registration link' : '-'))) ?></td>
                             <td><span class="status-pill <?= $statusClass ?>"><?= htmlspecialchars(ucfirst($status)) ?></span></td>
                             <td><?= htmlspecialchars((string)$invite['expires_at']) ?></td>
                             <td><span class="mono"><?= htmlspecialchars($joinLink) ?></span></td>
